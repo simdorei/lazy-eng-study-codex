@@ -141,13 +141,25 @@ def run_codex_translator(request: TranslationRequest) -> TranslationResult:
     if completed.returncode != 0:
         detail = completed.stderr.strip() or completed.stdout.strip()
         return TranslationFailure(reason=f"codex exited {completed.returncode}: {detail}")
-    english = completed.stdout.strip()
+    english = clean_codex_stdout(completed.stdout).strip()
     if english == "":
         return TranslationFailure(reason="codex returned empty translation")
     return TranslationSuccess(
         english=english,
         engine=f"{request.settings.model}/{request.settings.effort}",
     )
+
+
+def clean_codex_stdout(stdout: str) -> str:
+    lines = [
+        line
+        for line in stdout.splitlines()
+        if not (
+            line.startswith("SUCCESS: The process with PID ")
+            and line.endswith(" has been terminated.")
+        )
+    ]
+    return "\n".join(lines)
 
 
 def build_codex_command(settings: HookSettings, prompt: str) -> list[str]:

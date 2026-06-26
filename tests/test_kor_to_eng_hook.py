@@ -210,10 +210,16 @@ class KorToEngHookTest(unittest.TestCase):
     def test_default_codex_fallback_can_translate_through_run_hook(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             fake_codex = Path(temp_dir) / "codex.cmd"
-            _ = fake_codex.write_text(
-                "@echo off\r\necho Check the test thread status through default codex.\r\n",
-                encoding="utf-8",
+            cleanup_line = "echo SUCCESS: The process with PID 1 ({}) has been terminated.".format(
+                "child process of PID 2",
             )
+            script_lines = [
+                "@echo off",
+                cleanup_line,
+                "echo Check the test thread status through default codex.",
+                "",
+            ]
+            _ = fake_codex.write_text("\r\n".join(script_lines), encoding="utf-8")
             payload = {
                 "hook_event_name": "UserPromptSubmit",
                 "prompt": "테스트 스레드 상태 확인해줘",
@@ -230,6 +236,7 @@ class KorToEngHookTest(unittest.TestCase):
         parsed = parse_json_object(output)
         context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
         self.assertIn("gpt-5.4-mini/medium", get_text(parsed, "systemMessage"))
+        self.assertNotIn("SUCCESS: The process", context)
         self.assertIn("Check the test thread status through default codex.", context)
 
 
