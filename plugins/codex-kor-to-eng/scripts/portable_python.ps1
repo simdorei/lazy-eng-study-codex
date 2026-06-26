@@ -229,7 +229,9 @@ function Invoke-ProcessWithInput {
     if (-not $process.Start()) {
         throw "failed to start Python: $FileName"
     }
-    $process.StandardInput.Write($StandardInput)
+    if ($StandardInput -ne '') {
+        $process.StandardInput.Write($StandardInput)
+    }
     $process.StandardInput.Close()
     $stdout = $process.StandardOutput.ReadToEnd()
     $stderr = $process.StandardError.ReadToEnd()
@@ -253,11 +255,7 @@ function Invoke-ResolvedPython {
         $prefixArgs = $command[1..($command.Count - 1)]
     }
     $allArgs = @($prefixArgs) + @($Arguments)
-    if ($StandardInput -ne '') {
-        return Invoke-ProcessWithInput $exe $allArgs $StandardInput
-    }
-    & $exe @allArgs
-    return $LASTEXITCODE
+    return Invoke-ProcessWithInput $exe $allArgs $StandardInput
 }
 
 function Read-StandardInputUtf8 {
