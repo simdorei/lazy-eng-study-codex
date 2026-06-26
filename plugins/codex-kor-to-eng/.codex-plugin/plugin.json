@@ -6,6 +6,7 @@
     "name": "simdorei"
   },
   "skills": "./skills/",
+  "hooks": "./hooks/hooks.json",
   "interface": {
     "displayName": "Codex Kor To Eng",
     "shortDescription": "Translate Korean prompts into visible English context.",

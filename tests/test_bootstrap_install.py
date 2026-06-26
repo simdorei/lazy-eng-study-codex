@@ -63,9 +63,11 @@ class BootstrapInstallTest(unittest.TestCase):
     def test_hooks_json_uses_bootstrap_entrypoints(self) -> None:
         hooks = read_json_object(PLUGIN_ROOT / "hooks" / "hooks.json")
         serialized = json.dumps(hooks)
+        command_windows = serialized.replace("\\\\", "\\")
 
         self.assertIn("bootstrap.sh", serialized)
         self.assertIn("bootstrap.ps1", serialized)
+        self.assertIn("$env:PLUGIN_ROOT\\scripts\\bootstrap.ps1", command_windows)
         self.assertNotIn("kor_to_eng_hook.py", serialized)
         self.assertNotIn("py -3", serialized)
         self.assertNotIn("python3 ", serialized)

@@ -15,6 +15,7 @@ function Invoke-Bootstrap {
 
 Write-Output 'codex-kor-to-eng install starting'
 Invoke-Bootstrap @('-EnsurePython')
+Invoke-Bootstrap @('install_plugin.py')
 Invoke-Bootstrap @('kortoeng_control.py', 'model', 'mini')
 Invoke-Bootstrap @('kortoeng_control.py', 'on')
 Invoke-Bootstrap @('kortoeng_control.py', 'codex-bin')

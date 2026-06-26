@@ -6,6 +6,7 @@ bootstrap="$script_dir/bootstrap.sh"
 
 printf '%s\n' 'codex-kor-to-eng install starting'
 "$bootstrap" --ensure-python
+"$bootstrap" install_plugin.py
 "$bootstrap" kortoeng_control.py model mini
 "$bootstrap" kortoeng_control.py on
 "$bootstrap" kortoeng_control.py codex-bin

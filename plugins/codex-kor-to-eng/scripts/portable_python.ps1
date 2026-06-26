@@ -266,7 +266,19 @@ function Read-StandardInputUtf8 {
         while (($count = $stream.Read($buffer, 0, $buffer.Length)) -gt 0) {
             $memory.Write($buffer, 0, $count)
         }
-        return [System.Text.UTF8Encoding]::new($false).GetString($memory.ToArray())
+        $bytes = $memory.ToArray()
+        $hasUtf8Bom = $false
+        if ($bytes.Length -ge 3) {
+            $hasUtf8Bom = ($bytes[0] -eq 239)
+            $hasUtf8Bom = $hasUtf8Bom -and ($bytes[1] -eq 187)
+            $hasUtf8Bom = $hasUtf8Bom -and ($bytes[2] -eq 191)
+        }
+        if ($hasUtf8Bom -and $bytes.Length -eq 3) {
+            $bytes = [byte[]]::new(0)
+        } elseif ($hasUtf8Bom) {
+            $bytes = $bytes[3..($bytes.Length - 1)]
+        }
+        return [System.Text.UTF8Encoding]::new($false).GetString($bytes)
     } finally {
         $memory.Dispose()
     }
