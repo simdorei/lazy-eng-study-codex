@@ -1,0 +1,64 @@
+[project]
+name = "codex-kor-to-eng"
+version = "0.1.0"
+description = "Codex plugin for visible Korean-to-English prompt translation."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.basedpyright]
+typeCheckingMode = "all"
+pythonVersion = "3.12"
+include = ["plugins/codex-kor-to-eng/scripts", "tests"]
+extraPaths = ["plugins/codex-kor-to-eng/scripts"]
+reportAny = "none"
+reportUnknownVariableType = "none"
+reportUnnecessaryComparison = "none"
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+src = ["plugins", "tests"]
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+  "COM812",
+  "D",
+  "S101",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"plugins/codex-kor-to-eng/scripts/kor_to_eng_hook.py" = [
+  "FLY002",
+  "PLR0911",
+  "S602",
+  "S603",
+  "TC003",
+]
+"plugins/codex-kor-to-eng/scripts/codex_bin_discovery.py" = [
+  "TC003",
+]
+"plugins/codex-kor-to-eng/scripts/kortoeng_control.py" = [
+  "PLR0911",
+  "TC002",
+  "TC003",
+]
+"plugins/codex-kor-to-eng/scripts/plugin_settings.py" = [
+  "EM101",
+  "EM102",
+  "TC003",
+  "TRY003",
+]
+"tests/**/*.py" = [
+  "E402",
+  "EM101",
+  "EM102",
+  "PLR2004",
+  "PT009",
+  "SLF001",
+  "TC002",
+  "TC003",
+  "TRY003",
+  "TRY004",
+]

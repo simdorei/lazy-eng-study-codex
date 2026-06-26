@@ -1,0 +1,22 @@
+{
+  "name": "codex-kor-to-eng",
+  "version": "0.1.0+codex.20260626091608",
+  "description": "Translate Korean Codex prompts to English before the turn starts.",
+  "author": {
+    "name": "simdorei"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "Codex Kor To Eng",
+    "shortDescription": "Translate Korean prompts into visible English context.",
+    "longDescription": "Codex Kor To Eng adds a UserPromptSubmit hook that detects Korean prompts, translates them to English through a configurable translator, and injects the translation as visible hook output plus Codex-readable context. Run scripts/configure_model.ps1 after install to choose Spark, Mini, or GPT-5.5.",
+    "developerName": "simdorei",
+    "category": "Developer Tools",
+    "capabilities": [
+      "Hooks",
+      "Prompt Translation",
+      "Context Injection"
+    ],
+    "defaultPrompt": "Help me configure Korean-to-English prompt translation and choose Spark, Mini, or GPT-5.5."
+  }
+}

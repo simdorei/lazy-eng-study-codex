@@ -1,0 +1,237 @@
+from __future__ import annotations
+
+import json
+import os
+import sys
+import tempfile
+import unittest
+from collections.abc import Mapping
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SCRIPT_DIR = REPO_ROOT / "plugins" / "codex-kor-to-eng" / "scripts"
+sys.path.insert(0, str(SCRIPT_DIR))
+
+import kor_to_eng_hook as hook
+from hook_types import HookSettings, JsonObject, JsonValue
+
+
+def isolated_env(settings_path: Path, extra: Mapping[str, str] | None = None) -> dict[str, str]:
+    env = {
+        key: value
+        for key, value in os.environ.items()
+        if not key.startswith("CODEX_KOR_TO_ENG_")
+    }
+    env["CODEX_KOR_TO_ENG_SETTINGS_FILE"] = str(settings_path)
+    if extra is not None:
+        env.update(extra)
+    return env
+
+
+def parse_json_object(raw: str) -> JsonObject:
+    parsed = json.loads(raw, object_pairs_hook=json_object_pairs)
+    if not isinstance(parsed, dict):
+        raise AssertionError("expected JSON object")
+    normalized: JsonObject = {}
+    for key, item in parsed.items():
+        if isinstance(key, str):
+            normalized[key] = item
+    return normalized
+
+
+def json_object_pairs(pairs: list[tuple[str, JsonValue]]) -> JsonObject:
+    return dict(pairs)
+
+
+def get_value(value: Mapping[str, JsonValue], key: str) -> JsonValue:
+    if key not in value:
+        raise AssertionError(f"missing key: {key}")
+    return value[key]
+
+
+def get_text(value: Mapping[str, JsonValue], key: str) -> str:
+    item = get_value(value, key)
+    if not isinstance(item, str):
+        raise AssertionError(f"expected text key: {key}")
+    return item
+
+
+def get_object_map(value: Mapping[str, JsonValue], key: str) -> JsonObject:
+    item = get_value(value, key)
+    if not isinstance(item, dict):
+        raise AssertionError(f"expected object key: {key}")
+    normalized: JsonObject = {}
+    for nested_key, nested_item in item.items():
+        normalized[nested_key] = nested_item
+    return normalized
+
+
+class KorToEngHookTest(unittest.TestCase):
+    def test_adds_visible_english_context_when_korean_prompt_arrives(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fake_translator = Path(temp_dir) / "fake_translator.py"
+            _ = fake_translator.write_text(
+                "import sys\nsys.stdin.read()\nprint('Check the test thread status.')\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "테스트 스레드 상태 확인해줘",
+                "cwd": temp_dir,
+                "session_id": "session-1",
+            }
+            env = {
+                **isolated_env(Path(temp_dir) / "settings.json"),
+                "CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND": f'py -3 "{fake_translator}"',
+            }
+
+            output = hook.run_hook(json.dumps(payload), env)
+
+        parsed = parse_json_object(output)
+        hook_output = get_object_map(parsed, "hookSpecificOutput")
+        context = get_text(hook_output, "additionalContext")
+        notice_prefix = "Start the assistant reply with this exact line: "
+        expected_notice = f"{notice_prefix}\ubc88\uc5ed: Check the test thread status."
+        self.assertEqual(get_text(hook_output, "hookEventName"), "UserPromptSubmit")
+        self.assertIn("KOR->ENG (custom command)", get_text(parsed, "systemMessage"))
+        self.assertIn("Check the test thread status.", get_text(parsed, "systemMessage"))
+        self.assertIn(expected_notice, context)
+        self.assertIn("테스트 스레드 상태 확인해줘", context)
+        self.assertIn("Check the test thread status.", context)
+
+    def test_returns_no_output_when_prompt_has_no_korean(self) -> None:
+        payload = {
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": "Check the test thread status.",
+            "cwd": str(REPO_ROOT),
+            "session_id": "session-1",
+        }
+
+        output = hook.run_hook(json.dumps(payload), os.environ)
+
+        self.assertEqual(output, "")
+
+    def test_surfaces_translator_failure_instead_of_silent_fallback(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "테스트 스레드 상태 확인해줘",
+                "cwd": temp_dir,
+                "session_id": "session-1",
+            }
+            env = {
+                **isolated_env(Path(temp_dir) / "settings.json"),
+                "CODEX_KOR_TO_ENG_CODEX_BIN": "__missing_codex_binary__",
+                "PATH": "",
+            }
+            _ = env.pop("LOCALAPPDATA", None)
+            _ = env.pop("HOME", None)
+
+            output = hook.run_hook(json.dumps(payload), env)
+
+        parsed = parse_json_object(output)
+        hook_output = get_object_map(parsed, "hookSpecificOutput")
+        context = get_text(hook_output, "additionalContext")
+        self.assertIn("translation failed", get_text(parsed, "systemMessage"))
+        self.assertIn("codex executable not found", context)
+        self.assertIn("테스트 스레드 상태 확인해줘", context)
+
+    def test_surfaces_missing_cwd_instead_of_using_process_cwd(self) -> None:
+        payload = {
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": "테스트 스레드 상태 확인해줘",
+            "cwd": "C:\\definitely\\missing\\codex-kor-to-eng",
+            "session_id": "session-1",
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output = hook.run_hook(
+                json.dumps(payload),
+                isolated_env(Path(temp_dir) / "settings.json"),
+            )
+
+        parsed = parse_json_object(output)
+        context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
+        self.assertIn("translation failed", get_text(parsed, "systemMessage"))
+        self.assertIn("cwd is not a directory", context)
+
+    def test_surfaces_file_cwd_instead_of_crashing(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            file_cwd = Path(temp_dir) / "not-a-directory.txt"
+            _ = file_cwd.write_text("not a directory", encoding="utf-8")
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "테스트 스레드 상태 확인해줘",
+                "cwd": str(file_cwd),
+                "session_id": "session-1",
+            }
+
+            output = hook.run_hook(
+                json.dumps(payload),
+                isolated_env(Path(temp_dir) / "settings.json"),
+            )
+
+        parsed = parse_json_object(output)
+        context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
+        self.assertIn("translation failed", get_text(parsed, "systemMessage"))
+        self.assertIn("cwd is not a directory", context)
+
+    def test_disables_recursive_hook_when_child_codex_runs(self) -> None:
+        payload = {
+            "hook_event_name": "UserPromptSubmit",
+            "prompt": "테스트 스레드 상태 확인해줘",
+            "cwd": str(REPO_ROOT),
+            "session_id": "session-1",
+        }
+        env = {**os.environ, "CODEX_KOR_TO_ENG_DISABLED": "1"}
+
+        output = hook.run_hook(json.dumps(payload), env)
+
+        self.assertEqual(output, "")
+
+    def test_default_codex_command_uses_mini_model_and_medium_effort(self) -> None:
+        settings = HookSettings(
+            enabled=True,
+            custom_command=None,
+            codex_bin="codex",
+            model=hook.DEFAULT_MODEL,
+            effort=hook.DEFAULT_EFFORT,
+            timeout_seconds=45,
+        )
+
+        command = hook.build_codex_command(settings, "테스트해줘")
+
+        self.assertIn("gpt-5.4-mini", command)
+        self.assertIn('model_reasoning_effort="medium"', command)
+        self.assertIn("--ephemeral", command)
+        self.assertEqual(command[1:4], ["--ask-for-approval", "never", "exec"])
+        self.assertEqual(command[-1].splitlines()[-1], "테스트해줘")
+
+    def test_default_codex_fallback_can_translate_through_run_hook(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fake_codex = Path(temp_dir) / "codex.cmd"
+            _ = fake_codex.write_text(
+                "@echo off\r\necho Check the test thread status through default codex.\r\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "테스트 스레드 상태 확인해줘",
+                "cwd": temp_dir,
+                "session_id": "session-1",
+            }
+            env = isolated_env(
+                Path(temp_dir) / "settings.json",
+                {"CODEX_KOR_TO_ENG_CODEX_BIN": str(fake_codex)},
+            )
+
+            output = hook.run_hook(json.dumps(payload), env)
+
+        parsed = parse_json_object(output)
+        context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
+        self.assertIn("gpt-5.4-mini/medium", get_text(parsed, "systemMessage"))
+        self.assertIn("Check the test thread status through default codex.", context)
+
+
+if __name__ == "__main__":
+    _ = unittest.main()

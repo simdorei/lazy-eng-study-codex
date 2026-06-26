@@ -1,0 +1,8 @@
+.env
+.venv/
+.omo/
+__pycache__/
+*.py[cod]
+*.log
+node_modules/
+dist/

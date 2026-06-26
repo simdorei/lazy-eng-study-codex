@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"${PLUGIN_ROOT}/scripts/kor_to_eng_hook.py\"",
+            "commandWindows": "py -3 \"${PLUGIN_ROOT}\\scripts\\kor_to_eng_hook.py\"",
+            "timeout": 120,
+            "statusMessage": "Translating Korean prompt"
+          }
+        ]
+      }
+    ]
+  }
+}
