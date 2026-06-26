@@ -3,12 +3,12 @@ name = "codex-kor-to-eng"
 version = "0.1.0"
 description = "Codex plugin for visible Korean-to-English prompt translation."
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = ">=3.11"
 dependencies = []
 
 [tool.basedpyright]
 typeCheckingMode = "all"
-pythonVersion = "3.12"
+pythonVersion = "3.11"
 include = ["plugins/codex-kor-to-eng/scripts", "tests"]
 extraPaths = ["plugins/codex-kor-to-eng/scripts"]
 reportAny = "none"
@@ -16,7 +16,7 @@ reportUnknownVariableType = "none"
 reportUnnecessaryComparison = "none"
 
 [tool.ruff]
-target-version = "py312"
+target-version = "py311"
 line-length = 100
 src = ["plugins", "tests"]
 

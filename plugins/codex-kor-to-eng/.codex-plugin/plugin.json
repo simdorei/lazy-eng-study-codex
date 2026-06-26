@@ -1,7 +1,7 @@
 {
   "name": "codex-kor-to-eng",
-  "version": "0.1.0+codex.20260626091608",
-  "description": "Translate Korean Codex prompts to English before the turn starts.",
+  "version": "0.1.0+codex.20260627060500",
+  "description": "Translate Korean Codex prompts to English with a portable Python bootstrap.",
   "author": {
     "name": "simdorei"
   },
@@ -9,7 +9,7 @@
   "interface": {
     "displayName": "Codex Kor To Eng",
     "shortDescription": "Translate Korean prompts into visible English context.",
-    "longDescription": "Codex Kor To Eng adds a UserPromptSubmit hook that detects Korean prompts, translates them to English through a configurable translator, and injects the translation as visible hook output plus Codex-readable context. Run scripts/configure_model.ps1 after install to choose Spark, Mini, or GPT-5.5.",
+    "longDescription": "Codex Kor To Eng adds a UserPromptSubmit hook that detects Korean prompts, prepares Python through a portable bootstrap when needed, translates Korean to English through a configurable translator, and injects the translation as visible hook output plus Codex-readable context. Use $kortoeng-model or scripts/configure_model.ps1 after install to choose Spark, Mini, or GPT-5.5.",
     "developerName": "simdorei",
     "category": "Developer Tools",
     "capabilities": [

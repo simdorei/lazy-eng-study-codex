@@ -5,9 +5,9 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"${PLUGIN_ROOT}/scripts/kor_to_eng_hook.py\"",
-            "commandWindows": "py -3 \"${PLUGIN_ROOT}\\scripts\\kor_to_eng_hook.py\"",
-            "timeout": 120,
+            "command": "sh \"${PLUGIN_ROOT}/scripts/bootstrap.sh\"",
+            "commandWindows": "powershell -NoProfile -ExecutionPolicy Bypass -File \"${PLUGIN_ROOT}\\scripts\\bootstrap.ps1\"",
+            "timeout": 240,
             "statusMessage": "Translating Korean prompt"
           }
         ]

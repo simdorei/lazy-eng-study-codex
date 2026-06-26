@@ -18,6 +18,12 @@ from plugin_settings import (
     settings_file_path,
 )
 
+HOOK_SCOPE = "loaded_codex_sessions"
+HOOK_RELOAD_NOTE = (
+    "If a Codex app thread does not show the translation line, restart or reopen Codex "
+    "so the UserPromptSubmit hook is loaded for that thread."
+)
+
 
 def main(argv: Sequence[str] | None = None, env: Mapping[str, str] | None = None) -> int:
     args = list(sys.argv[1:] if argv is None else argv)
@@ -60,6 +66,8 @@ def show_status(env: Mapping[str, str]) -> int:
     _ = sys.stdout.write(f"codex_bin={settings.codex_bin}\n")
     _ = sys.stdout.write(f"codex_bin_source={resolution.source}\n")
     _ = sys.stdout.write(f"codex_found={json.dumps(codex_found)}\n")
+    _ = sys.stdout.write(f"hook_scope={HOOK_SCOPE}\n")
+    _ = sys.stdout.write(f"hook_reload_note={HOOK_RELOAD_NOTE}\n")
     if not codex_found:
         _ = sys.stdout.write("codex executable was not found.\n")
     return 0
@@ -72,6 +80,8 @@ def set_enabled(env: Mapping[str, str], *, enabled: bool) -> int:
     state = "on" if enabled else "off"
     _ = sys.stdout.write(f"translation={state}\n")
     _ = sys.stdout.write(f"settings_file={path}\n")
+    _ = sys.stdout.write(f"hook_scope={HOOK_SCOPE}\n")
+    _ = sys.stdout.write(f"hook_reload_note={HOOK_RELOAD_NOTE}\n")
     return 0
 
 

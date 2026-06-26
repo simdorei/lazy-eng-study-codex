@@ -16,8 +16,8 @@ Supported choices:
 If the user did not name a model, recommend `mini` and ask which model to set.
 When the model is known, run from this plugin root:
 
-- Windows: `py -3 .\scripts\kortoeng_control.py model mini`
-- macOS/Linux: `python3 ./scripts/kortoeng_control.py model mini`
+- Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1 kortoeng_control.py model mini`
+- macOS: `sh ./scripts/bootstrap.sh kortoeng_control.py model mini`
 
 Replace `mini` with the chosen model. Report the printed `model=...`,
 `timeout_seconds=...`, and `settings_file=...` lines.

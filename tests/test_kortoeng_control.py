@@ -64,6 +64,9 @@ class KortoengControlTest(unittest.TestCase):
         self.assertEqual(bin_exit, 0)
         self.assertIn("translation=off", off_output)
         self.assertIn("translation=on", on_output)
+        self.assertIn("hook_scope=loaded_codex_sessions", off_output)
+        self.assertIn("hook_scope=loaded_codex_sessions", on_output)
+        self.assertIn("restart or reopen Codex", on_output)
         self.assertIn("model=gpt-5.4-mini", model_output)
         self.assertIn("codex_bin=", bin_output)
         self.assertEqual(settings["enabled"], True)
@@ -84,6 +87,7 @@ class KortoengControlTest(unittest.TestCase):
         self.assertEqual(exit_code, 0)
         self.assertIn("codex_bin_source=fallback", output)
         self.assertIn("codex_found=false", output)
+        self.assertIn("hook_scope=loaded_codex_sessions", output)
         self.assertIn("codex executable was not found.", output)
 
     def test_codex_bin_saves_absolute_configured_path(self) -> None:

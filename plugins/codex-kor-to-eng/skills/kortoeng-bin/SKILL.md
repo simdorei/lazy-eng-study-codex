@@ -10,8 +10,8 @@ settings file.
 
 Run from this plugin root:
 
-- Windows: `py -3 .\scripts\kortoeng_control.py codex-bin`
-- macOS/Linux: `python3 ./scripts/kortoeng_control.py codex-bin`
+- Windows: `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1 kortoeng_control.py codex-bin`
+- macOS: `sh ./scripts/bootstrap.sh kortoeng_control.py codex-bin`
 
 Report the printed `codex_bin=...`, `source=...`, and `settings_file=...` lines.
 If the command reports that `codex` was not found, surface that exact failure

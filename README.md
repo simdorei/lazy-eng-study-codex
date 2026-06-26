@@ -21,10 +21,16 @@ Default translation path:
 gpt-5.4-mini + medium reasoning effort
 ```
 
-If Spark is available on your account, set:
+If Spark is available on your account, choose it after install:
+
+```text
+$kortoeng-model spark
+```
+
+Or from the plugin root:
 
 ```powershell
-$env:CODEX_KOR_TO_ENG_MODEL = "gpt-5.3-codex-spark"
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1 kortoeng_control.py model spark
 ```
 
 If Spark is not available, leave the default alone.
@@ -44,10 +50,18 @@ From this repository root:
 
 ```powershell
 codex plugin marketplace add .
+powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
 Then open the Codex app, go to Plugins, find `Codex Kor To Eng`, install it, and
 restart Codex so the hook is loaded.
+
+On Apple Silicon macOS, run:
+
+```sh
+codex plugin marketplace add .
+sh ./install.sh
+```
 
 After install, these skills are available inside Codex:
 
@@ -59,41 +73,68 @@ After install, these skills are available inside Codex:
 | `$kortoeng-bin` | Find the current Codex executable and save that static path. |
 | `$kortoeng` | Diagnose path lookup when translation looks broken. |
 
+These commands update one global settings file. They do not inject a hook into
+an already-open Codex app thread that never loaded the plugin. If a thread does
+not show the visible `번역:` line after `$kortoeng-on`, restart or reopen Codex
+so the `UserPromptSubmit` hook is loaded there too.
+
 The hook does not hard-code a versioned Codex app folder. It looks for:
 
 1. `CODEX_KOR_TO_ENG_CODEX_BIN`, only if that file still exists.
 2. `codex` on `PATH`.
 3. The Codex app install folder on Windows or macOS.
 
-On macOS, the hook command uses `python3`. If `codex` is on `PATH` or installed
-in the normal Codex app location, no extra Mac setting is needed.
+The hook does not assume Python is already installed. It starts through
+`scripts/bootstrap.ps1` on Windows and `scripts/bootstrap.sh` on macOS. The
+bootstrap first looks for Python 3.11 or newer. If it cannot find one, it
+downloads a plugin-scoped portable Python runtime and uses that. It does not
+install Python into the operating system.
+
+Portable Python support is for Windows x64/ARM64 and Apple Silicon macOS. Intel
+macOS is intentionally not supported.
 
 ## Configure
 
-The plugin works without Discord. It only needs Codex plus Python on the machine
-that runs Codex.
+The plugin works without Discord. It needs Codex. Python is prepared by the
+bootstrap when the host does not already have Python 3.11 or newer.
 
 The Python control script writes a small JSON settings file. By default it lives
 under your Codex home folder. For tests or unusual setups, set
 `CODEX_KOR_TO_ENG_SETTINGS_FILE`.
 
+The hook reads this file every time it runs. That makes on/off/model changes
+global for every loaded hook, including old and new threads that have the hook.
+If a thread never loaded the hook, the plugin code is not being called and the
+Codex app must reload the plugin list first.
+
 Examples from the plugin root:
 
 ```powershell
-py -3 .\scripts\kortoeng_control.py off
-py -3 .\scripts\kortoeng_control.py on
-py -3 .\scripts\kortoeng_control.py model mini
-py -3 .\scripts\kortoeng_control.py codex-bin
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1 kortoeng_control.py off
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1 kortoeng_control.py on
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1 kortoeng_control.py model mini
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1 kortoeng_control.py codex-bin
+powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure_model.ps1 -Model mini
+```
+
+On Apple Silicon macOS, use `sh ./scripts/bootstrap.sh ...` instead:
+
+```sh
+sh ./scripts/bootstrap.sh kortoeng_control.py on
+sh ./scripts/bootstrap.sh kortoeng_control.py model mini
 ```
 
 Useful environment variables:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `CODEX_KOR_TO_ENG_MODEL` | `gpt-5.4-mini` | Model used by the built-in Codex fallback translator. |
-| `CODEX_KOR_TO_ENG_EFFORT` | `medium` | Reasoning effort for translation. |
+| `CODEX_KOR_TO_ENG_MODEL` | `gpt-5.4-mini` | Fallback model used only when no model is stored in the settings file. |
+| `CODEX_KOR_TO_ENG_EFFORT` | `medium` | Fallback reasoning effort used only when no effort is stored in the settings file. |
 | `CODEX_KOR_TO_ENG_CODEX_BIN` | auto-detected | Optional manual override for unusual Codex CLI installs. Missing stale paths are ignored. |
-| `CODEX_KOR_TO_ENG_TIMEOUT_SECONDS` | `45` | Maximum time to wait for translation. |
+| `CODEX_KOR_TO_ENG_RUNTIME_DIR` | `$CODEX_HOME/codex-kor-to-eng/runtime` | Local cache root for portable Python. |
+| `CODEX_KOR_TO_ENG_PYTHON_DOWNLOAD_ROOT` | Python standalone release URL | Download root for portable Python archives. |
+| `CODEX_KOR_TO_ENG_PYTHON_BIN` | auto-detected | Optional Python executable override for managed environments. |
+| `CODEX_KOR_TO_ENG_TIMEOUT_SECONDS` | `45` | Fallback maximum wait time used only when no timeout is stored in the settings file. |
 | `CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND` | empty | Custom translator command. Receives the translation prompt on stdin and must print English to stdout. |
 
 The hook sets `CODEX_KOR_TO_ENG_DISABLED=1` when it calls a child Codex process.
@@ -145,7 +186,7 @@ Manual hook smoke test with a custom translator:
 $env:CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND = 'py -3 .\tests\fixtures\fake_translator.py'
 @'
 {"hook_event_name":"UserPromptSubmit","prompt":"\ud14c\uc2a4\ud2b8 \uc2a4\ub808\ub4dc \uc0c1\ud0dc \ud655\uc778\ud574\uc918","cwd":"C:\\repos\\simdorei\\codex-kor-to-eng","session_id":"manual"}
-'@ | py -3 .\plugins\codex-kor-to-eng\scripts\kor_to_eng_hook.py
+'@ | powershell -NoProfile -ExecutionPolicy Bypass -File .\plugins\codex-kor-to-eng\scripts\bootstrap.ps1
 ```
 
 The output should be JSON with `systemMessage` and

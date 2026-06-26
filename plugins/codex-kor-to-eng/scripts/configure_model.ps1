@@ -24,25 +24,12 @@ function Select-KorToEngModel {
     }
 }
 
-switch (Select-KorToEngModel) {
-    'spark' {
-        $selected = 'gpt-5.3-codex-spark'
-        $timeoutSeconds = '90'
-    }
-    'mini' {
-        $selected = 'gpt-5.4-mini'
-        $timeoutSeconds = '45'
-    }
-    'gpt55' {
-        $selected = 'gpt-5.5'
-        $timeoutSeconds = '90'
-    }
-    default { throw 'Unknown model selection.' }
+$selectedAlias = Select-KorToEngModel
+$scriptDir = Split-Path -Parent $PSCommandPath
+$bootstrap = Join-Path $scriptDir 'bootstrap.ps1'
+$powerShellExe = (Get-Process -Id $PID).Path
+
+& $powerShellExe -NoProfile -ExecutionPolicy Bypass -File $bootstrap 'kortoeng_control.py' model $selectedAlias
+if ($LASTEXITCODE -ne 0) {
+    exit $LASTEXITCODE
 }
-
-[Environment]::SetEnvironmentVariable('CODEX_KOR_TO_ENG_MODEL', $selected, 'User')
-[Environment]::SetEnvironmentVariable('CODEX_KOR_TO_ENG_TIMEOUT_SECONDS', $timeoutSeconds, 'User')
-
-Write-Host "CODEX_KOR_TO_ENG_MODEL=$selected"
-Write-Host "CODEX_KOR_TO_ENG_TIMEOUT_SECONDS=$timeoutSeconds"
-Write-Host 'Restart Codex for the hook to read this setting.'
