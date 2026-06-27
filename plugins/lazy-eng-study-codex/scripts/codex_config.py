@@ -3,12 +3,16 @@ from __future__ import annotations
 import json
 import re
 from datetime import UTC, datetime
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Final
 
 if TYPE_CHECKING:
     from pathlib import Path
 
     from hook_trust import TrustedHookState
+
+LEGACY_MARKETPLACE_NAME: Final = "codex-kor-to-eng-local"
+LEGACY_PLUGIN_KEY: Final = "codex-kor-to-eng@codex-kor-to-eng-local"
+LEGACY_HOOK_KEY: Final = f"{LEGACY_PLUGIN_KEY}:hooks/hooks.json:user_prompt_submit:0:0"
 
 
 def update_codex_config(
@@ -21,6 +25,7 @@ def update_codex_config(
 ) -> None:
     config_path.parent.mkdir(parents=True, exist_ok=True)
     config = config_path.read_text(encoding="utf-8") if config_path.is_file() else ""
+    config = remove_legacy_plugin_config(config)
     config = ensure_table_setting(config, "features", "plugins", "true")
     config = ensure_table_setting(config, "features", "plugin_hooks", "true")
     config = upsert_table(
@@ -47,6 +52,12 @@ def update_codex_config(
         )
         config = upsert_table(config, header, body)
     _ = config_path.write_text(f"{config.rstrip()}\n", encoding="utf-8")
+
+
+def remove_legacy_plugin_config(config: str) -> str:
+    cleaned = remove_table(config, f"marketplaces.{LEGACY_MARKETPLACE_NAME}")
+    cleaned = remove_table(cleaned, f"plugins.{toml_string(LEGACY_PLUGIN_KEY)}")
+    return remove_table(cleaned, f"hooks.state.{toml_string(LEGACY_HOOK_KEY)}")
 
 
 def ensure_table_setting(config: str, header: str, key: str, value: str) -> str:
