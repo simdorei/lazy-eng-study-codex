@@ -31,10 +31,9 @@ Useful skills:
 - `$kortoeng`: diagnose path lookup when translation looks broken.
 
 The on/off/model/bin skills write a small settings file that the hook reads on
-each Korean prompt. That setting is global, but only threads where Codex has
-loaded this plugin's `UserPromptSubmit` hook can read it. If an existing app
-thread does not show a visible `번역:` line, restart or reopen Codex so the hook
-list is loaded for that thread.
+each Korean prompt. That setting is global. Already-open Codex app threads read
+the new on/off value every time the hook runs. Restart or reopen Codex only if
+this plugin's `UserPromptSubmit` hook itself was not loaded in that thread.
 
 You can also choose the translation model from PowerShell:
 

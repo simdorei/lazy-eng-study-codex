@@ -13,7 +13,7 @@ Run from this plugin root:
 - macOS: `sh ./scripts/bootstrap.sh kortoeng_control.py off`
 
 Report the printed `translation=off`, `settings_file=...`, `hook_scope=...`,
-and `hook_reload_note=...` lines. The setting is global, but it only affects
-Codex app threads where the `UserPromptSubmit` hook is already loaded. If an
-existing thread still shows translation after turning it off, Codex must be
-restarted or the thread reopened so the hook list is loaded there too.
+and `hook_reload_note=...` lines. The setting is global. Already-open Codex app
+threads read the on/off value every time the hook runs, so changes apply after
+the settings file is saved. Restart or reopen Codex only if the
+`UserPromptSubmit` hook itself was not loaded in that thread.

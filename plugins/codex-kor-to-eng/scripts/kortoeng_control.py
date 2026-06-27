@@ -20,8 +20,9 @@ from plugin_settings import (
 
 HOOK_SCOPE = "loaded_codex_sessions"
 HOOK_RELOAD_NOTE = (
-    "If a Codex app thread does not show the translation line, restart or reopen Codex "
-    "so the UserPromptSubmit hook is loaded for that thread."
+    "Loaded Codex sessions read on/off settings every time the hook runs. "
+    "Changes apply after the settings file is saved; restart or reopen Codex only if "
+    "the UserPromptSubmit hook itself was not loaded."
 )
 
 

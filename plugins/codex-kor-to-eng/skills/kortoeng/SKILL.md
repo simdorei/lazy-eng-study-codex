@@ -28,10 +28,10 @@ model tokens.
 Do not set `CODEX_KOR_TO_ENG_CODEX_BIN` to a versioned Codex app folder unless
 the user explicitly asks for a manual override.
 
-Important: `$kortoeng-on` and `$kortoeng-off` update one global settings file,
-but Codex still has to load this plugin's `UserPromptSubmit` hook in each app
-thread. If a thread does not show the visible `번역:` line, the hook is not
-loaded there yet; restart or reopen Codex so the hook list is loaded.
+Important: `$kortoeng-on` and `$kortoeng-off` update one global settings file.
+Already-open Codex app threads read the new on/off value every time the hook
+runs. Restart or reopen Codex only if this plugin's `UserPromptSubmit` hook
+itself was not loaded in that thread.
 
 For actual control, use:
 
