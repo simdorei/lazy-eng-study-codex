@@ -7,8 +7,9 @@ import sys
 from collections.abc import Mapping
 from json import JSONDecodeError
 from pathlib import Path
-from typing import Final, assert_never
+from typing import Final
 
+from hook_output import format_hook_output
 from hook_types import (
     HookSettings,
     JsonObject,
@@ -22,16 +23,10 @@ from hook_types import (
 from plugin_settings import DEFAULT_EFFORT as _DEFAULT_EFFORT
 from plugin_settings import DEFAULT_MODEL as _DEFAULT_MODEL
 from plugin_settings import SettingsError, read_hook_settings
+from prompt_rewrite import build_rewrite_prompt, contains_korean, should_polish_english
 
-HANGUL_START: Final = ord("\uac00")
-HANGUL_END: Final = ord("\ud7a3")
 DEFAULT_MODEL: Final = _DEFAULT_MODEL
 DEFAULT_EFFORT: Final = _DEFAULT_EFFORT
-MAX_VISIBLE_CHARS: Final = 700
-
-
-def contains_korean(text: str) -> bool:
-    return any(HANGUL_START <= ord(char) <= HANGUL_END for char in text)
 
 
 def resolve_cwd(raw_cwd: str) -> str | None:
@@ -86,7 +81,7 @@ def run_custom_translator(request: TranslationRequest) -> TranslationResult:
     command = request.settings.custom_command
     if command is None:
         return TranslationFailure(reason="custom translator command is missing")
-    translation_prompt = build_translation_prompt(request.prompt)
+    translation_prompt = build_rewrite_prompt(request.prompt)
     env = translator_env(os.environ)
     try:
         completed = subprocess.run(
@@ -179,17 +174,8 @@ def build_codex_command(settings: HookSettings, prompt: str) -> list[str]:
         f'model_reasoning_effort="{settings.effort}"',
         "--config",
         'model_verbosity="low"',
-        build_translation_prompt(prompt),
+        build_rewrite_prompt(prompt),
     ]
-
-
-def build_translation_prompt(prompt: str) -> str:
-    return f"""Translate the following Korean Codex user request into natural English.
-Output only the English translation. Do not add markdown or commentary.
-Preserve file paths, commands, code, URLs, IDs, and @mentions exactly.
-
-Korean request:
-{prompt}"""
 
 
 def translator_env(env: Mapping[str, str]) -> dict[str, str]:
@@ -198,65 +184,13 @@ def translator_env(env: Mapping[str, str]) -> dict[str, str]:
     return prepared
 
 
-def format_hook_output(payload: PromptPayload, result: TranslationResult) -> str:
-    match result:
-        case TranslationSuccess(english=english, engine=engine):
-            visible_translation_notice = f"\ubc88\uc5ed: {limit_visible(english)}"
-            context = "\n".join(
-                [
-                    "Korean-to-English prompt translation is active.",
-                    f"Translation engine: {engine}",
-                    "Show the translation in the Codex app itself.",
-                    f"Start the assistant reply with this exact line: {visible_translation_notice}",
-                    "Treat the English translation as the primary user request.",
-                    "Use the Korean original only to resolve translation ambiguity.",
-                    "",
-                    "Korean original:",
-                    payload.prompt,
-                    "",
-                    "English translation:",
-                    english,
-                ],
-            )
-            system_message = f"KOR->ENG ({engine}): {limit_visible(english)}"
-        case TranslationFailure(reason=reason):
-            context = "\n".join(
-                [
-                    "Korean prompt was detected, but translation failed.",
-                    "Do not assume an English translation was available.",
-                    f"Failure: {reason}",
-                    "",
-                    "Korean original:",
-                    payload.prompt,
-                ],
-            )
-            system_message = f"KOR->ENG translation failed: {limit_visible(reason)}"
-        case _ as unreachable:
-            assert_never(unreachable)
-    output = {
-        "systemMessage": system_message,
-        "hookSpecificOutput": {
-            "hookEventName": "UserPromptSubmit",
-            "additionalContext": context,
-        },
-    }
-    return json.dumps(output, ensure_ascii=True) + "\n"
-
-
-def limit_visible(text: str) -> str:
-    one_line = " ".join(text.split())
-    if len(one_line) <= MAX_VISIBLE_CHARS:
-        return one_line
-    return f"{one_line[:MAX_VISIBLE_CHARS - 3]}..."
-
-
 def run_hook(raw: str, env: Mapping[str, str]) -> str:
     if env.get("CODEX_KOR_TO_ENG_DISABLED") == "1":
         return ""
     payload = parse_payload(raw)
     if payload is None:
         return ""
-    if not contains_korean(payload.prompt):
+    if not (contains_korean(payload.prompt) or should_polish_english(payload.prompt)):
         return ""
     try:
         settings = read_settings(env)

@@ -90,12 +90,14 @@ class KorToEngHookTest(unittest.TestCase):
         parsed = parse_json_object(output)
         hook_output = get_object_map(parsed, "hookSpecificOutput")
         context = get_text(hook_output, "additionalContext")
-        notice_prefix = "Start the assistant reply with this exact line: "
+        notice_prefix = "First visible assistant message line: "
         expected_notice = f"{notice_prefix}\ubc88\uc5ed: Check the test thread status."
+        system_message = get_text(parsed, "systemMessage")
         self.assertEqual(get_text(hook_output, "hookEventName"), "UserPromptSubmit")
-        self.assertIn("KOR->ENG (custom command)", get_text(parsed, "systemMessage"))
-        self.assertIn("Check the test thread status.", get_text(parsed, "systemMessage"))
+        self.assertTrue(system_message.startswith("\ubc88\uc5ed: Check the test thread status."))
+        self.assertIn("(custom command)", system_message)
         self.assertIn(expected_notice, context)
+        self.assertIn("Do not repeat that line in the final answer", context)
         self.assertIn("테스트 스레드 상태 확인해줘", context)
         self.assertIn("Check the test thread status.", context)
 
@@ -122,7 +124,36 @@ class KorToEngHookTest(unittest.TestCase):
         parsed = parse_json_object(output)
         self.assertIn("Check the test thread status.", get_text(parsed, "systemMessage"))
 
-    def test_returns_no_output_when_prompt_has_no_korean(self) -> None:
+    def test_polishes_awkward_english_prompt_when_no_korean_present(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fake_translator = Path(temp_dir) / "fake_translator.py"
+            _ = fake_translator.write_text(
+                "import sys\nsys.stdin.read()\nprint('So sentence correction works, right?')\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "Then awkward sentence fixing is okay?",
+                "cwd": temp_dir,
+                "session_id": "session-1",
+            }
+            env = {
+                **isolated_env(Path(temp_dir) / "settings.json"),
+                "CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND": f'py -3 "{fake_translator}"',
+            }
+
+            output = hook.run_hook(json.dumps(payload), env)
+
+        parsed = parse_json_object(output)
+        context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
+        system_message = get_text(parsed, "systemMessage")
+        self.assertTrue(system_message.startswith("\ubc88\uc5ed: So sentence correction works"))
+        self.assertIn("Original English:", context)
+        self.assertIn("Corrected English:", context)
+        self.assertIn("Then awkward sentence fixing is okay?", context)
+        self.assertIn("So sentence correction works, right?", context)
+
+    def test_returns_no_output_when_fluent_english_prompt_arrives(self) -> None:
         payload = {
             "hook_event_name": "UserPromptSubmit",
             "prompt": "Check the test thread status.",

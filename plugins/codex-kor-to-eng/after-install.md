@@ -1,4 +1,4 @@
-# Codex Kor To Eng installed
+# Lazy Eng Study Codex installed
 
 Type `$kortoeng` in Codex to check the Codex executable path. The hook normally
 finds it automatically, so you do not need to save a hard-coded `codex.exe`
@@ -22,6 +22,7 @@ runtime. It does not system-install Python.
 
 Useful skills:
 
+- `$gram <English sentence>`: correct one English sentence and show `교정: ...`.
 - `$kortoeng-on`: turn translation on.
 - `$kortoeng-off`: turn translation off.
 - `$kortoeng-model`: choose the translation model.

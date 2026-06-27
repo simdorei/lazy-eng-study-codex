@@ -1,9 +1,9 @@
 ---
 name: kor-to-eng
-description: Use when the user wants Korean Codex prompts translated to English before the agent reads them, or wants to configure the Codex Kor To Eng hook.
+description: Use when the user wants Korean Codex prompts translated to English before the agent reads them, wants English correction, or wants to configure Lazy Eng Study Codex.
 ---
 
-# Codex Kor To Eng
+# Lazy Eng Study Codex
 
 This plugin installs a `UserPromptSubmit` hook. When a prompt contains Korean
 text, the hook asks a translator to produce English, then adds that English as
@@ -11,7 +11,9 @@ visible hook output and Codex-readable context.
 
 Default behavior:
 
-- Korean-free prompts are left untouched.
+- Fluent English prompts are left untouched.
+- Awkward English prompts with obvious correction markers are rewritten into
+  natural English.
 - Korean prompts use `codex exec` with `gpt-5.4-mini` and medium reasoning
   effort.
 - The hook finds the Codex executable automatically from `PATH`, the Codex app
@@ -23,6 +25,7 @@ Default behavior:
 - Run `$kortoeng-on` or `$kortoeng-off` to toggle translation.
 - Run `$kortoeng-model` to choose Spark, Mini, or GPT-5.5.
 - Run `$kortoeng-bin` to find the current Codex executable and save that path.
+- Run `$gram <English sentence>` to correct one English sentence on demand.
 - Run `scripts/configure_model.ps1` to write the same model setting as
   `$kortoeng-model`. It can choose one of:
   - `gpt-5.3-codex-spark`

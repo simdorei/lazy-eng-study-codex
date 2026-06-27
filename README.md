@@ -1,13 +1,12 @@
-# Codex Kor To Eng
+# Lazy Eng Study Codex
 
-Codex app plugin for people who naturally type Korean but want Codex to receive
-an English version too.
+Codex app plugin for people who naturally type Korean but want to study English
+while using Codex.
 
-The plugin runs before each Codex turn starts. If the prompt contains Korean, it
-asks a translator for English, asks the next assistant reply to start with a
-visible `번역: ...` line, and gives Codex the English translation as extra
-context. The original Korean is kept beside it so translation mistakes are
-easier to notice.
+The plugin runs before each Codex turn starts. Korean prompts are translated to
+visible English context, obvious awkward English can be corrected, and
+`$gram <English sentence>` gives an on-demand `교정: ...` line for lazy English
+study.
 
 ## Why Spark Is Optional
 
@@ -43,8 +42,9 @@ References:
 
 ## Install In Codex
 
-This repository is shaped as a local plugin marketplace. The actual plugin is in
-`plugins/codex-kor-to-eng`.
+This repository is shaped as a local plugin marketplace. The public repository
+is `lazy-eng-study-codex`; the internal plugin id remains
+`plugins/codex-kor-to-eng` for install compatibility.
 
 From this repository root:
 
@@ -53,8 +53,8 @@ codex plugin marketplace add .
 powershell -NoProfile -ExecutionPolicy Bypass -File .\install.ps1
 ```
 
-Then open the Codex app, go to Plugins, find `Codex Kor To Eng`, install it, and
-restart Codex so the hook is loaded.
+Then open the Codex app, go to Plugins, find `Lazy Eng Study Codex`, install it,
+and restart Codex so the hook is loaded.
 
 On Apple Silicon macOS, run:
 
@@ -63,15 +63,16 @@ codex plugin marketplace add .
 sh ./install.sh
 ```
 
-After install, these skills are available inside Codex:
+After install, these commands are available inside Codex:
 
-| Skill | Use |
+| Command | Use |
 | --- | --- |
 | `$kortoeng-on` | Turn Korean translation on. |
 | `$kortoeng-off` | Turn Korean translation off. |
 | `$kortoeng-model` | Choose `mini`, `spark`, or `gpt55`. |
 | `$kortoeng-bin` | Find the current Codex executable and save that static path. |
 | `$kortoeng` | Diagnose path lookup when translation looks broken. |
+| `$gram <sentence>` | Correct one English sentence and show `교정: ...`. |
 
 These commands update one global settings file. They do not inject a hook into
 an already-open Codex app thread that never loaded the plugin. If a thread does
@@ -165,7 +166,18 @@ The assistant reply should start with a visible line like:
 번역: Check the test thread status.
 ```
 
-For English-only input, the hook outputs nothing.
+For fluent English-only input, the hook outputs nothing. For explicit grammar
+study:
+
+```text
+$gram is number2 implimented now?
+```
+
+The visible correction is:
+
+```text
+교정: Is number 2 implemented now?
+```
 
 If translation fails, the hook reports the actual failure instead of silently
 pretending translation worked.
@@ -185,7 +197,7 @@ Manual hook smoke test with a custom translator:
 ```powershell
 $env:CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND = 'py -3 .\tests\fixtures\fake_translator.py'
 @'
-{"hook_event_name":"UserPromptSubmit","prompt":"\ud14c\uc2a4\ud2b8 \uc2a4\ub808\ub4dc \uc0c1\ud0dc \ud655\uc778\ud574\uc918","cwd":"C:\\repos\\simdorei\\codex-kor-to-eng","session_id":"manual"}
+{"hook_event_name":"UserPromptSubmit","prompt":"\ud14c\uc2a4\ud2b8 \uc2a4\ub808\ub4dc \uc0c1\ud0dc \ud655\uc778\ud574\uc918","cwd":"C:\\repos\\simdorei\\lazy-eng-study-codex","session_id":"manual"}
 '@ | powershell -NoProfile -ExecutionPolicy Bypass -File .\plugins\codex-kor-to-eng\scripts\bootstrap.ps1
 ```
 
