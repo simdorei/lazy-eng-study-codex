@@ -25,7 +25,8 @@ Default behavior:
 - Run `$kortoeng-on` or `$kortoeng-off` to toggle translation.
 - Run `$kortoeng-model` to choose Spark, Mini, or GPT-5.5.
 - Run `$kortoeng-bin` to find the current Codex executable and save that path.
-- Run `$gram <English sentence>` to correct one English sentence on demand.
+- Run `$gram <English request>` to show the correction, then handle the corrected
+  request normally.
 - Run `scripts/configure_model.ps1` to write the same model setting as
   `$kortoeng-model`. It can choose one of:
   - `gpt-5.3-codex-spark`

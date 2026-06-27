@@ -30,7 +30,7 @@ def format_hook_output(payload: PromptPayload, result: TranslationResult) -> str
                 else "Prompt translation/correction hook is active."
             )
             action_note = (
-                "Answer with that exact correction line."
+                "Treat the corrected English prompt as the primary user request."
                 if grammar_command
                 else "Treat the rewritten English prompt as the primary user request."
             )

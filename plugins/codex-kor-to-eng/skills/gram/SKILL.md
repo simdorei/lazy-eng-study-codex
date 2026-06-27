@@ -5,12 +5,12 @@ description: Use when the user invokes $gram to correct one English sentence whi
 
 # Gram
 
-`$gram <English sentence>` is a code-backed grammar correction command.
+`$gram <English request>` is a code-backed grammar correction command.
 
 The hook strips `$gram`, sends the remaining sentence to the configured rewrite
-model, and returns a visible `교정: ...` line. When this skill is active and the
-hook context contains `First visible assistant message line: 교정: ...`, answer
-with that exact correction line.
+model, and returns a visible `교정: ...` line. When this skill is active, show
+that correction line if it was not already shown, then handle the corrected
+English request normally.
 
 If the user asks about the correction, explain briefly why the corrected
 sentence is more natural.

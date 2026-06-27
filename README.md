@@ -5,8 +5,8 @@ while using Codex.
 
 The plugin runs before each Codex turn starts. Korean prompts are translated to
 visible English context, obvious awkward English can be corrected, and
-`$gram <English sentence>` gives an on-demand `교정: ...` line for lazy English
-study.
+`$gram <English request>` gives an on-demand `교정: ...` line, then Codex handles
+the corrected request normally.
 
 ## Why Spark Is Optional
 
@@ -72,7 +72,7 @@ After install, these commands are available inside Codex:
 | `$kortoeng-model` | Choose `mini`, `spark`, or `gpt55`. |
 | `$kortoeng-bin` | Find the current Codex executable and save that static path. |
 | `$kortoeng` | Diagnose path lookup when translation looks broken. |
-| `$gram <sentence>` | Correct one English sentence and show `교정: ...`. |
+| `$gram <request>` | Show `교정: ...`, then handle the corrected English request normally. |
 
 These commands update one global settings file. They do not inject a hook into
 an already-open Codex app thread that never loaded the plugin. If a thread does
@@ -142,6 +142,28 @@ The hook sets `CODEX_KOR_TO_ENG_DISABLED=1` when it calls a child Codex process.
 That prevents an endless loop where the translation Codex run triggers this same
 translation hook again.
 
+## Correction Scope
+
+`$gram` is explicit, so it asks the rewrite model to improve the remaining
+English request even when the original is understandable. "Understandable" only
+means the rough meaning can be guessed; it can still be corrected if it is
+awkward, typo-prone, or vague.
+
+`$gram` may correct:
+
+- spelling and typos, such as `implimented` to `implemented`
+- capitalization and terms, such as `readme` to `README`
+- spacing and numbering, such as `number2` to `number 2`
+- grammar, punctuation, and word order
+- unnatural wording that a fluent English speaker would not normally use
+- vague but understandable phrasing, when it can be improved without inventing
+  missing details
+
+The correction must preserve the user's intent, file paths, commands, code,
+URLs, IDs, and @mentions. If a sentence is already fluent and clear, the rewrite
+may be identical or only minimally changed. Automatic English polishing without
+`$gram` is more conservative and only catches obvious awkward markers.
+
 ## What You See
 
 For Korean input:
@@ -178,6 +200,8 @@ The visible correction is:
 ```text
 교정: Is number 2 implemented now?
 ```
+
+Codex then treats `Is number 2 implemented now?` as the request to answer.
 
 If translation fails, the hook reports the actual failure instead of silently
 pretending translation worked.

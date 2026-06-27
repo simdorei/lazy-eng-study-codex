@@ -55,7 +55,8 @@ class GramHookTest(unittest.TestCase):
         context = hook_output["additionalContext"]
         self.assertTrue(parsed["systemMessage"].startswith("\uad50\uc815: Is number 2"))
         self.assertIn("$gram grammar correction command is active.", context)
-        self.assertIn("Answer with that exact correction line.", context)
+        self.assertIn("Treat the corrected English prompt as the primary user request.", context)
+        self.assertNotIn("Answer with that exact correction line.", context)
         self.assertIn("is number2 implimented now?", context)
         self.assertNotIn("$gram is number2", context)
 

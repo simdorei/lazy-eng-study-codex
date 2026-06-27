@@ -22,7 +22,8 @@ runtime. It does not system-install Python.
 
 Useful skills:
 
-- `$gram <English sentence>`: correct one English sentence and show `교정: ...`.
+- `$gram <English request>`: show `교정: ...`, then handle the corrected request
+  normally.
 - `$kortoeng-on`: turn translation on.
 - `$kortoeng-off`: turn translation off.
 - `$kortoeng-model`: choose the translation model.
