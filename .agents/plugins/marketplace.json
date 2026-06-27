@@ -1,14 +1,14 @@
 {
-  "name": "codex-kor-to-eng-local",
+  "name": "lazy-eng-study-codex-local",
   "interface": {
-    "displayName": "Codex Kor To Eng Local"
+    "displayName": "Lazy Eng Study Codex Local"
   },
   "plugins": [
     {
-      "name": "codex-kor-to-eng",
+      "name": "lazy-eng-study-codex",
       "source": {
         "source": "local",
-        "path": "./plugins/codex-kor-to-eng"
+        "path": "./plugins/lazy-eng-study-codex"
       },
       "policy": {
         "installation": "AVAILABLE",

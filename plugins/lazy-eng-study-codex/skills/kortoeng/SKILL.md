@@ -1,6 +1,6 @@
 ---
 name: kortoeng
-description: Use when the user invokes $kortoeng or asks Codex Kor To Eng to find and apply the local Codex CLI path.
+description: Use when the user invokes $kortoeng or asks Lazy Eng Study Codex to find and apply the local Codex CLI path.
 ---
 
 # Kortoeng

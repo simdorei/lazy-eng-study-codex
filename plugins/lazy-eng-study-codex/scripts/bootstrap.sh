@@ -13,9 +13,9 @@ runtime_root() {
     if [ -n "${CODEX_KOR_TO_ENG_RUNTIME_DIR:-}" ]; then
         printf '%s\n' "$CODEX_KOR_TO_ENG_RUNTIME_DIR"
     elif [ -n "${CODEX_HOME:-}" ]; then
-        printf '%s\n' "$CODEX_HOME/codex-kor-to-eng/runtime"
+        printf '%s\n' "$CODEX_HOME/lazy-eng-study-codex/runtime"
     else
-        printf '%s\n' "$HOME/.codex/codex-kor-to-eng/runtime"
+        printf '%s\n' "$HOME/.codex/lazy-eng-study-codex/runtime"
     fi
 }
 
@@ -69,7 +69,7 @@ asset_for_platform() {
         return 0
     fi
     if [ "$os" = "Darwin" ] && [ "$arch" = "x86_64" ]; then
-        printf '%s\n' "Intel macOS is not supported by Codex Kor To Eng portable Python bootstrap." >&2
+        printf '%s\n' "Intel macOS is not supported by Lazy Eng Study Codex portable Python bootstrap." >&2
         return 1
     fi
     printf '%s\n' "unsupported platform for portable Python: $os/$arch" >&2

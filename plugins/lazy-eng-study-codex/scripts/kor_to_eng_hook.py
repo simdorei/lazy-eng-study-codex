@@ -7,13 +7,15 @@ import sys
 from collections.abc import Mapping
 from json import JSONDecodeError
 from pathlib import Path
-from typing import Final
+from typing import Final, assert_never
 
-from hook_output import format_hook_output
+from hook_output import format_hook_output, format_preflight_failure
 from hook_types import (
     HookSettings,
     JsonObject,
     JsonValue,
+    PromptParseFailure,
+    PromptParseResult,
     PromptPayload,
     TranslationFailure,
     TranslationRequest,
@@ -35,16 +37,16 @@ def resolve_cwd(raw_cwd: str) -> str | None:
     return None
 
 
-def parse_payload(raw: str) -> PromptPayload | None:
+def parse_payload(raw: str) -> PromptParseResult:
     raw = raw.removeprefix("\ufeff")
     if raw.strip() == "":
-        return None
+        return PromptParseFailure(reason="hook input is empty")
     try:
         parsed = json.loads(raw, object_pairs_hook=json_object_pairs)
-    except JSONDecodeError:
-        return None
+    except JSONDecodeError as exc:
+        return PromptParseFailure(reason=f"hook input JSON is invalid: {exc}")
     if not isinstance(parsed, dict):
-        return None
+        return PromptParseFailure(reason="hook input JSON must be an object")
     payload: JsonObject = {}
     for key, item in parsed.items():
         if isinstance(key, str):
@@ -56,9 +58,9 @@ def parse_payload(raw: str) -> PromptPayload | None:
     if event != "UserPromptSubmit":
         return None
     if not isinstance(prompt, str):
-        return None
+        return PromptParseFailure(reason="hook input prompt must be a string")
     if not isinstance(cwd, str):
-        return None
+        return PromptParseFailure(reason="hook input cwd must be a string")
     return PromptPayload(prompt=prompt, cwd=cwd)
 
 
@@ -187,9 +189,15 @@ def translator_env(env: Mapping[str, str]) -> dict[str, str]:
 def run_hook(raw: str, env: Mapping[str, str]) -> str:
     if env.get("CODEX_KOR_TO_ENG_DISABLED") == "1":
         return ""
-    payload = parse_payload(raw)
-    if payload is None:
-        return ""
+    match parse_payload(raw):
+        case PromptPayload() as payload:
+            pass
+        case PromptParseFailure(reason=reason):
+            return format_preflight_failure(reason)
+        case None:
+            return ""
+        case unreachable:
+            assert_never(unreachable)
     if not (contains_korean(payload.prompt) or should_polish_english(payload.prompt)):
         return ""
     try:

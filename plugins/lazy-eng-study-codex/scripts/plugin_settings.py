@@ -68,9 +68,11 @@ def read_timeout_seconds(stored: Mapping[str, JsonValue], env: Mapping[str, str]
     try:
         parsed = int(raw)
     except ValueError:
-        return DEFAULT_TIMEOUT_SECONDS
+        raise SettingsError(
+            "CODEX_KOR_TO_ENG_TIMEOUT_SECONDS must be a positive integer",
+        ) from None
     if parsed < 1:
-        return DEFAULT_TIMEOUT_SECONDS
+        raise SettingsError("CODEX_KOR_TO_ENG_TIMEOUT_SECONDS must be a positive integer")
     return parsed
 
 
@@ -107,13 +109,13 @@ def settings_file_path(env: Mapping[str, str]) -> Path:
 
     codex_home = empty_to_none(env.get("CODEX_HOME"))
     if codex_home is not None:
-        return Path(codex_home) / "kor-to-eng-settings.json"
+        return Path(codex_home) / "lazy-eng-study-codex-settings.json"
 
     home = empty_to_none(env.get("USERPROFILE")) or empty_to_none(env.get("HOME"))
     if home is not None:
-        return Path(home) / ".codex" / "kor-to-eng-settings.json"
+        return Path(home) / ".codex" / "lazy-eng-study-codex-settings.json"
 
-    return Path.home() / ".codex" / "kor-to-eng-settings.json"
+    return Path.home() / ".codex" / "lazy-eng-study-codex-settings.json"
 
 
 def resolve_model_choice(raw: str) -> ModelChoice:

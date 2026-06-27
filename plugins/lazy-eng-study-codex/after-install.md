@@ -22,8 +22,8 @@ runtime. It does not system-install Python.
 
 Useful skills:
 
-- `$gram <English request>`: show `교정: ...`, then handle the corrected request
-  normally.
+- `$gram <English request>`: show `교정: ...` as Codex's understood request, then
+  handle it normally.
 - `$kortoeng-on`: turn translation on.
 - `$kortoeng-off`: turn translation off.
 - `$kortoeng-model`: choose the translation model.

@@ -12,7 +12,7 @@ import unittest
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PLUGIN_ROOT = REPO_ROOT / "plugins" / "codex-kor-to-eng"
+PLUGIN_ROOT = REPO_ROOT / "plugins" / "lazy-eng-study-codex"
 SCRIPT_DIR = PLUGIN_ROOT / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
@@ -21,12 +21,25 @@ from hook_trust import trusted_hook_states_for_plugin
 from hook_types import JsonObject
 from install_errors import InstallPluginError
 
+EXPECTED_PLUGIN_NAME = "lazy-eng-study-codex"
+EXPECTED_MARKETPLACE_NAME = "lazy-eng-study-codex-local"
+
 
 def read_json_object(path: Path) -> JsonObject:
     parsed = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(parsed, dict):
         raise AssertionError("expected JSON object")
     return parsed
+
+
+def get_object_map(value: JsonObject, key: str) -> JsonObject:
+    item = value.get(key)
+    if not isinstance(item, dict):
+        raise AssertionError(f"expected object key: {key}")
+    normalized: JsonObject = {}
+    for nested_key, nested_item in item.items():
+        normalized[nested_key] = nested_item
+    return normalized
 
 
 def first_hook_handler(hooks_file: Path) -> JsonObject:
@@ -64,6 +77,14 @@ class InstallPluginTest(unittest.TestCase):
 
         self.assertEqual(manifest["hooks"], "./hooks/hooks.json")
 
+    def test_plugin_manifest_declares_lazy_eng_study_identity(self) -> None:
+        manifest = read_json_object(PLUGIN_ROOT / ".codex-plugin" / "plugin.json")
+        plugin_interface = get_object_map(manifest, "interface")
+
+        self.assertEqual(manifest["name"], EXPECTED_PLUGIN_NAME)
+        self.assertEqual(install_plugin.MARKETPLACE_NAME, EXPECTED_MARKETPLACE_NAME)
+        self.assertEqual(plugin_interface["displayName"], "Lazy Eng Study Codex")
+
     def test_install_populates_cache_and_codex_config(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             codex_home = Path(temp_dir) / "codex-home"
@@ -83,8 +104,8 @@ class InstallPluginTest(unittest.TestCase):
                 codex_home
                 / "plugins"
                 / "cache"
-                / "codex-kor-to-eng-local"
-                / "codex-kor-to-eng"
+                / "lazy-eng-study-codex-local"
+                / "lazy-eng-study-codex"
                 / str(manifest["version"])
             )
             config = existing_config.read_text(encoding="utf-8")
@@ -110,18 +131,22 @@ class InstallPluginTest(unittest.TestCase):
         self.assertIn('[projects."keep"]', config)
         self.assertIn("plugins = true", config)
         self.assertIn("plugin_hooks = true", config)
-        self.assertIn("[marketplaces.codex-kor-to-eng-local]", config)
+        self.assertIn(f"[marketplaces.{EXPECTED_MARKETPLACE_NAME}]", config)
         self.assertIn('source_type = "local"', config)
         self.assertIn(f"source = {json.dumps(str(PLUGIN_ROOT.parent))}", config)
-        self.assertIn('[plugins."codex-kor-to-eng@codex-kor-to-eng-local"]', config)
+        self.assertIn(f'[plugins."{EXPECTED_PLUGIN_NAME}@{EXPECTED_MARKETPLACE_NAME}"]', config)
         self.assertIn("enabled = true", config)
         self.assertIn(
-            '[hooks.state."codex-kor-to-eng@codex-kor-to-eng-local:hooks/hooks.json:user_prompt_submit:0:0"]',
+            (
+                f'[hooks.state."{EXPECTED_PLUGIN_NAME}@{EXPECTED_MARKETPLACE_NAME}:'
+                'hooks/hooks.json:user_prompt_submit:0:0"]'
+            ),
             config,
         )
         self.assertIn(
             (
-                '[hooks.state."codex-kor-to-eng@codex-kor-to-eng-local:hooks/hooks.json:user_prompt_submit:0:0"]\n'
+                f'[hooks.state."{EXPECTED_PLUGIN_NAME}@{EXPECTED_MARKETPLACE_NAME}:'
+                'hooks/hooks.json:user_prompt_submit:0:0"]\n'
                 "enabled = true\n"
             ),
             config,
@@ -208,7 +233,7 @@ class InstallPluginTest(unittest.TestCase):
         try:
             _ = trusted_hook_states_for_plugin(
                 plugin_root=PLUGIN_ROOT,
-                plugin_name="codex-kor-to-eng",
+                plugin_name="lazy-eng-study-codex",
                 marketplace_name=install_plugin.MARKETPLACE_NAME,
                 manifest=manifest,
             )
@@ -223,7 +248,7 @@ class InstallPluginTest(unittest.TestCase):
                 _ = install_plugin.copy_plugin_to_cache(
                     plugin_root=PLUGIN_ROOT,
                     codex_home=Path(temp_dir),
-                    plugin_name="codex-kor-to-eng",
+                    plugin_name="lazy-eng-study-codex",
                     version=".",
                 )
             except InstallPluginError as exc:

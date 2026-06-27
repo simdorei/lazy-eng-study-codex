@@ -11,7 +11,7 @@ from collections.abc import Mapping, Sequence
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SCRIPT_DIR = REPO_ROOT / "plugins" / "codex-kor-to-eng" / "scripts"
+SCRIPT_DIR = REPO_ROOT / "plugins" / "lazy-eng-study-codex" / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import kor_to_eng_hook as hook
@@ -152,6 +152,30 @@ class KortoengControlTest(unittest.TestCase):
         self.assertEqual(exit_code, 2)
         self.assertIn("unknown model", output)
         self.assertEqual(settings, {"enabled": True})
+
+    def test_invalid_timeout_env_returns_structured_failure(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fake_translator = Path(temp_dir) / "fake_translator.py"
+            _ = fake_translator.write_text(
+                "import sys\nsys.stdin.read()\nprint('Check the test thread status.')\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "테스트 스레드 상태 확인해줘",
+                "cwd": temp_dir,
+            }
+            env = {
+                "CODEX_KOR_TO_ENG_SETTINGS_FILE": str(Path(temp_dir) / "settings.json"),
+                "CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND": f'py -3 "{fake_translator}"',
+                "CODEX_KOR_TO_ENG_TIMEOUT_SECONDS": "not-a-number",
+            }
+
+            output = hook.run_hook(json.dumps(payload), env)
+
+        parsed = parse_json_object(output)
+        self.assertIn("translation failed", str(parsed["systemMessage"]))
+        self.assertIn("CODEX_KOR_TO_ENG_TIMEOUT_SECONDS must be a positive integer", output)
 
     def test_disabled_settings_make_hook_output_empty(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

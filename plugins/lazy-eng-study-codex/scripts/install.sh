@@ -4,7 +4,7 @@ set -eu
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 bootstrap="$script_dir/bootstrap.sh"
 
-printf '%s\n' 'codex-kor-to-eng install starting'
+printf '%s\n' 'Lazy Eng Study Codex install starting'
 "$bootstrap" --ensure-python
 "$bootstrap" install_plugin.py
 "$bootstrap" kortoeng_control.py model mini

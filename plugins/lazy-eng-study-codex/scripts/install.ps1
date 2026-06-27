@@ -13,7 +13,7 @@ function Invoke-Bootstrap {
     }
 }
 
-Write-Output 'codex-kor-to-eng install starting'
+Write-Output 'Lazy Eng Study Codex install starting'
 Invoke-Bootstrap @('-EnsurePython')
 Invoke-Bootstrap @('install_plugin.py')
 Invoke-Bootstrap @('kortoeng_control.py', 'model', 'mini')

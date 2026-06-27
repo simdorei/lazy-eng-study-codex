@@ -14,6 +14,11 @@ class PromptPayload:
 
 
 @dataclass(frozen=True, slots=True)
+class PromptParseFailure:
+    reason: str
+
+
+@dataclass(frozen=True, slots=True)
 class HookSettings:
     enabled: bool
     custom_command: str | None
@@ -42,3 +47,4 @@ class TranslationRequest:
 
 
 TranslationResult = TranslationSuccess | TranslationFailure
+PromptParseResult = PromptPayload | PromptParseFailure | None

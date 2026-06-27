@@ -6,7 +6,7 @@ while using Codex.
 The plugin runs before each Codex turn starts. Korean prompts are translated to
 visible English context, obvious awkward English can be corrected, and
 `$gram <English request>` gives an on-demand `교정: ...` line, then Codex handles
-the corrected request normally.
+that visible understood request normally.
 
 ## Why Spark Is Optional
 
@@ -43,8 +43,7 @@ References:
 ## Install In Codex
 
 This repository is shaped as a local plugin marketplace. The public repository
-is `lazy-eng-study-codex`; the internal plugin id remains
-`plugins/codex-kor-to-eng` for install compatibility.
+is `lazy-eng-study-codex`; the plugin path is `plugins/lazy-eng-study-codex`.
 
 From this repository root:
 
@@ -72,7 +71,7 @@ After install, these commands are available inside Codex:
 | `$kortoeng-model` | Choose `mini`, `spark`, or `gpt55`. |
 | `$kortoeng-bin` | Find the current Codex executable and save that static path. |
 | `$kortoeng` | Diagnose path lookup when translation looks broken. |
-| `$gram <request>` | Show `교정: ...`, then handle the corrected English request normally. |
+| `$gram <request>` | Show `교정: ...` as Codex's understood request, then handle it normally. |
 
 These commands update one global settings file. They do not inject a hook into
 an already-open Codex app thread that never loaded the plugin. If a thread does
@@ -132,7 +131,7 @@ Useful environment variables:
 | `CODEX_KOR_TO_ENG_MODEL` | `gpt-5.4-mini` | Fallback model used only when no model is stored in the settings file. |
 | `CODEX_KOR_TO_ENG_EFFORT` | `medium` | Fallback reasoning effort used only when no effort is stored in the settings file. |
 | `CODEX_KOR_TO_ENG_CODEX_BIN` | auto-detected | Optional manual override for unusual Codex CLI installs. Missing stale paths are ignored. |
-| `CODEX_KOR_TO_ENG_RUNTIME_DIR` | `$CODEX_HOME/codex-kor-to-eng/runtime` | Local cache root for portable Python. |
+| `CODEX_KOR_TO_ENG_RUNTIME_DIR` | `$CODEX_HOME/lazy-eng-study-codex/runtime` | Local cache root for portable Python. |
 | `CODEX_KOR_TO_ENG_PYTHON_DOWNLOAD_ROOT` | Python standalone release URL | Download root for portable Python archives. |
 | `CODEX_KOR_TO_ENG_PYTHON_BIN` | auto-detected | Optional Python executable override for managed environments. |
 | `CODEX_KOR_TO_ENG_TIMEOUT_SECONDS` | `45` | Fallback maximum wait time used only when no timeout is stored in the settings file. |
@@ -201,10 +200,12 @@ The visible correction is:
 교정: Is number 2 implemented now?
 ```
 
-Codex then treats `Is number 2 implemented now?` as the request to answer.
+Codex then treats the visible `교정:` line as the request to answer. The assistant
+does not run a second correction pass; the hook has already shown the understood
+request.
 
-If translation fails, the hook reports the actual failure instead of silently
-pretending translation worked.
+If translation or correction fails, the hook reports the actual failure instead
+of silently pretending the rewrite worked.
 
 ## Test
 
@@ -222,7 +223,7 @@ Manual hook smoke test with a custom translator:
 $env:CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND = 'py -3 .\tests\fixtures\fake_translator.py'
 @'
 {"hook_event_name":"UserPromptSubmit","prompt":"\ud14c\uc2a4\ud2b8 \uc2a4\ub808\ub4dc \uc0c1\ud0dc \ud655\uc778\ud574\uc918","cwd":"C:\\repos\\simdorei\\lazy-eng-study-codex","session_id":"manual"}
-'@ | powershell -NoProfile -ExecutionPolicy Bypass -File .\plugins\codex-kor-to-eng\scripts\bootstrap.ps1
+'@ | powershell -NoProfile -ExecutionPolicy Bypass -File .\plugins\lazy-eng-study-codex\scripts\bootstrap.ps1
 ```
 
 The output should be JSON with `systemMessage` and

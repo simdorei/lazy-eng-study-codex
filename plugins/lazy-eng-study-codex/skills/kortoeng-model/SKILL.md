@@ -1,6 +1,6 @@
 ---
 name: kortoeng-model
-description: Use when the user wants to choose the Codex Kor To Eng translation model.
+description: Use when the user wants to choose the Lazy Eng Study Codex translation model.
 ---
 
 # Kortoeng Model

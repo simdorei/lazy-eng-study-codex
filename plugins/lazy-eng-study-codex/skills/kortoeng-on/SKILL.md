@@ -1,6 +1,6 @@
 ---
 name: kortoeng-on
-description: Use when the user wants to turn Codex Kor To Eng translation on.
+description: Use when the user wants to turn Lazy Eng Study Codex translation on.
 ---
 
 # Kortoeng On

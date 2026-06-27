@@ -2,4 +2,4 @@
 set -eu
 
 repo_root=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-exec "$repo_root/plugins/codex-kor-to-eng/scripts/install.sh"
+exec "$repo_root/plugins/lazy-eng-study-codex/scripts/install.sh"

@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from hook_trust import TrustedHookState
     from hook_types import JsonObject, JsonValue
 
-MARKETPLACE_NAME: Final = "codex-kor-to-eng-local"
+MARKETPLACE_NAME: Final = "lazy-eng-study-codex-local"
 
 
 @dataclass(frozen=True, slots=True)

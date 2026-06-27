@@ -4,6 +4,7 @@ $ProgressPreference = 'SilentlyContinue'
 [Console]::OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 $OutputEncoding = [System.Text.UTF8Encoding]::new($false)
 
+# allow: SIZE_OK - one portable Python bootstrap workflow; split before adding unrelated behavior.
 $MinimumPythonMajor = 3
 $MinimumPythonMinor = 11
 $PortablePythonVersion = '3.12.13'
@@ -30,9 +31,9 @@ function Get-RuntimeRoot {
         return $env:CODEX_KOR_TO_ENG_RUNTIME_DIR
     }
     if ($env:CODEX_HOME) {
-        return (Join-Path $env:CODEX_HOME 'codex-kor-to-eng\runtime')
+        return (Join-Path $env:CODEX_HOME 'lazy-eng-study-codex\runtime')
     }
-    return (Join-Path $HOME '.codex\codex-kor-to-eng\runtime')
+    return (Join-Path $HOME '.codex\lazy-eng-study-codex\runtime')
 }
 
 function Get-DownloadRoot {
@@ -229,9 +230,7 @@ function Invoke-ProcessWithInput {
     if (-not $process.Start()) {
         throw "failed to start Python: $FileName"
     }
-    if ($StandardInput -ne '') {
-        $process.StandardInput.Write($StandardInput)
-    }
+    $process.StandardInput.Write($StandardInput)
     $process.StandardInput.Close()
     $stdout = $process.StandardOutput.ReadToEnd()
     $stderr = $process.StandardError.ReadToEnd()
@@ -267,15 +266,9 @@ function Read-StandardInputUtf8 {
             $memory.Write($buffer, 0, $count)
         }
         $bytes = $memory.ToArray()
-        $hasUtf8Bom = $false
-        if ($bytes.Length -ge 3) {
-            $hasUtf8Bom = ($bytes[0] -eq 239)
-            $hasUtf8Bom = $hasUtf8Bom -and ($bytes[1] -eq 187)
-            $hasUtf8Bom = $hasUtf8Bom -and ($bytes[2] -eq 191)
-        }
-        if ($hasUtf8Bom -and $bytes.Length -eq 3) {
-            $bytes = [byte[]]::new(0)
-        } elseif ($hasUtf8Bom) {
+        $hasUtf8Bom = ($bytes.Length -ge 3) -and ($bytes[0] -eq 239) -and ($bytes[1] -eq 187) -and ($bytes[2] -eq 191)
+        if ($hasUtf8Bom) {
+            if ($bytes.Length -eq 3) { return '' }
             $bytes = $bytes[3..($bytes.Length - 1)]
         }
         return [System.Text.UTF8Encoding]::new($false).GetString($bytes)

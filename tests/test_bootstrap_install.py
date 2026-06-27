@@ -11,7 +11,7 @@ from collections.abc import Mapping
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-PLUGIN_ROOT = REPO_ROOT / "plugins" / "codex-kor-to-eng"
+PLUGIN_ROOT = REPO_ROOT / "plugins" / "lazy-eng-study-codex"
 SCRIPT_DIR = PLUGIN_ROOT / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
@@ -59,11 +59,36 @@ def parse_json_object(raw: str) -> JsonObject:
     return normalized
 
 
+def get_object_map(value: Mapping[str, JsonValue], key: str) -> JsonObject:
+    item = value.get(key)
+    if not isinstance(item, dict):
+        raise AssertionError(f"expected object key: {key}")
+    normalized: JsonObject = {}
+    for nested_key, nested_item in item.items():
+        normalized[nested_key] = nested_item
+    return normalized
+
+
+def get_list(value: Mapping[str, JsonValue], key: str) -> list[JsonValue]:
+    item = value.get(key)
+    if not isinstance(item, list):
+        raise AssertionError(f"expected list key: {key}")
+    return item
+
+
 class BootstrapInstallTest(unittest.TestCase):
     def test_hooks_json_uses_bootstrap_entrypoints(self) -> None:
         hooks = read_json_object(PLUGIN_ROOT / "hooks" / "hooks.json")
         serialized = json.dumps(hooks)
         command_windows = serialized.replace("\\\\", "\\")
+        hook_groups = get_list(get_object_map(hooks, "hooks"), "UserPromptSubmit")
+        first_group = hook_groups[0]
+        if not isinstance(first_group, dict):
+            raise AssertionError("expected hook group")
+        handlers = get_list(first_group, "hooks")
+        handler = handlers[0]
+        if not isinstance(handler, dict):
+            raise AssertionError("expected hook handler")
 
         self.assertIn("bootstrap.sh", serialized)
         self.assertIn("bootstrap.ps1", serialized)
@@ -71,6 +96,7 @@ class BootstrapInstallTest(unittest.TestCase):
         self.assertNotIn("kor_to_eng_hook.py", serialized)
         self.assertNotIn("py -3", serialized)
         self.assertNotIn("python3 ", serialized)
+        self.assertEqual(handler["statusMessage"], "Translating/correcting prompt")
 
     def test_install_ps1_configures_plugin_with_configured_python(self) -> None:
         ps = powershell_exe()
