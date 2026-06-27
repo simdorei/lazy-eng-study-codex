@@ -41,6 +41,7 @@ def resolve_cwd(raw_cwd: str) -> str | None:
 
 
 def parse_payload(raw: str) -> PromptPayload | None:
+    raw = raw.removeprefix("\ufeff")
     if raw.strip() == "":
         return None
     try:

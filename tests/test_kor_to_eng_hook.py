@@ -99,6 +99,29 @@ class KorToEngHookTest(unittest.TestCase):
         self.assertIn("테스트 스레드 상태 확인해줘", context)
         self.assertIn("Check the test thread status.", context)
 
+    def test_accepts_utf8_bom_prefixed_payload(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fake_translator = Path(temp_dir) / "fake_translator.py"
+            _ = fake_translator.write_text(
+                "import sys\nsys.stdin.read()\nprint('Check the test thread status.')\n",
+                encoding="utf-8",
+            )
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "테스트 스레드 상태 확인해줘",
+                "cwd": temp_dir,
+                "session_id": "session-1",
+            }
+            env = {
+                **isolated_env(Path(temp_dir) / "settings.json"),
+                "CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND": f'py -3 "{fake_translator}"',
+            }
+
+            output = hook.run_hook(f"\ufeff{json.dumps(payload)}", env)
+
+        parsed = parse_json_object(output)
+        self.assertIn("Check the test thread status.", get_text(parsed, "systemMessage"))
+
     def test_returns_no_output_when_prompt_has_no_korean(self) -> None:
         payload = {
             "hook_event_name": "UserPromptSubmit",
