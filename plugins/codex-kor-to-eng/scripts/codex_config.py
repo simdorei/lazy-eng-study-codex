@@ -40,7 +40,11 @@ def update_codex_config(
     config = upsert_table(config, plugin_header, f"[{plugin_header}]\nenabled = true")
     for state in trusted_hooks:
         header = f"hooks.state.{toml_string(state.key)}"
-        body = f"[{header}]\ntrusted_hash = {toml_string(state.trusted_hash)}"
+        body = (
+            f"[{header}]\n"
+            "enabled = true\n"
+            f"trusted_hash = {toml_string(state.trusted_hash)}"
+        )
         config = upsert_table(config, header, body)
     _ = config_path.write_text(f"{config.rstrip()}\n", encoding="utf-8")
 

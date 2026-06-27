@@ -112,10 +112,18 @@ class InstallPluginTest(unittest.TestCase):
         self.assertIn("plugin_hooks = true", config)
         self.assertIn("[marketplaces.codex-kor-to-eng-local]", config)
         self.assertIn('source_type = "local"', config)
+        self.assertIn(f"source = {json.dumps(str(PLUGIN_ROOT.parent))}", config)
         self.assertIn('[plugins."codex-kor-to-eng@codex-kor-to-eng-local"]', config)
         self.assertIn("enabled = true", config)
         self.assertIn(
             '[hooks.state."codex-kor-to-eng@codex-kor-to-eng-local:hooks/hooks.json:user_prompt_submit:0:0"]',
+            config,
+        )
+        self.assertIn(
+            (
+                '[hooks.state."codex-kor-to-eng@codex-kor-to-eng-local:hooks/hooks.json:user_prompt_submit:0:0"]\n'
+                "enabled = true\n"
+            ),
             config,
         )
         self.assertIn(f'trusted_hash = "{trusted_states[0].trusted_hash}"', config)
