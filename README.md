@@ -71,12 +71,23 @@ After install, these commands are available inside Codex:
 | `$kortoeng-model` | Choose `mini`, `spark`, or `gpt55`. |
 | `$kortoeng-bin` | Find the current Codex executable and save that static path. |
 | `$kortoeng` | Diagnose path lookup when translation looks broken. |
+| `$kor <Korean request>` | Translate one Korean prompt even when automatic translation is off. |
 | `$gram <request>` | Show `교정: ...` as Codex's understood request, then handle it normally. |
 
 These commands update one global settings file. They do not inject a hook into
 an already-open Codex app thread that never loaded the plugin. If a thread does
 not show the visible `번역:` line after `$kortoeng-on`, restart or reopen Codex
 so the `UserPromptSubmit` hook is loaded there too.
+
+### `$kor` 일회성 번역 / One-Shot Translation
+
+`$kortoeng-off` 상태에서도 이번 프롬프트만 영어로 번역하고 싶을 때
+`$kor <한국어 요청>`을 사용합니다. 훅은 `$kor`를 제거하고 남은 한국어를 번역한
+뒤 `번역: ...` 줄을 보여주며, 저장된 자동 번역 on/off 설정은 바꾸지 않습니다.
+
+Use `$kor <Korean request>` when `$kortoeng-off` is active but one prompt should
+still be translated. The hook strips `$kor`, translates the remaining Korean,
+shows a `번역: ...` line, and leaves the saved on/off setting unchanged.
 
 The hook does not hard-code a versioned Codex app folder. It looks for:
 
