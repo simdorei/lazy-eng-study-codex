@@ -86,12 +86,13 @@ class GramHookTest(unittest.TestCase):
         self.assertIn(understood_request_note, context)
         self.assertIn("Original English:", context)
 
-    def test_gram_prompt_shows_understood_request_without_style_polish(self) -> None:
+    def test_gram_prompt_shows_actionable_request_without_actor_drift(self) -> None:
         prompt = build_rewrite_prompt("$gram committing and pushing now!")
 
         self.assertIn("understood request", prompt)
-        self.assertIn("Do not polish the wording just to make it more natural.", prompt)
-        self.assertIn("Keep short fragments as short fragments", prompt)
+        self.assertIn("prefer an imperative request", prompt)
+        self.assertIn('Do not add first-person subjects like "I\'m"', prompt)
+        self.assertIn("Do not change the actor, action, or intent.", prompt)
         natural_polish_prompt = (
             "Rewrite the following English Codex user request into natural English."
         )

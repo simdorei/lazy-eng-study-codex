@@ -125,9 +125,10 @@ English request:
 def build_understood_request_prompt(prompt: str) -> str:
     return f"""Show the following English Codex user request as the request Codex should answer.
 Output only the understood request. Do not add markdown or commentary.
-Do not polish the wording just to make it more natural.
-Keep short fragments as short fragments when they are already understandable.
-Do not add missing subjects, actors, or details unless the action would otherwise be unclear.
+Fix grammar only as needed to show the actionable request Codex should answer.
+If the user is asking Codex to do something, prefer an imperative request.
+Do not add first-person subjects like "I'm" unless the user clearly meant them.
+Do not change the actor, action, or intent.
 Preserve file paths, commands, code, URLs, IDs, and @mentions exactly.
 
 English request:
