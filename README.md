@@ -127,9 +127,7 @@ $gram is number2 implimented now?
 `$gram`은 영어를 예쁘게 꾸미는 명령이 아닙니다. Codex가 답해야 할 요청을 기준으로
 문법만 최소한으로 정리해 보여주는 것이 목표입니다.
 
-최근 동작도 이 기준에 맞췄습니다. 예를 들어 `committing and pushing now!`가
-Codex에게 시킨 말이라면 `I'm ...`처럼 사용자가 직접 하는 말로 바꾸지 않고,
-`Commit and push now.`처럼 요청 형태에 가깝게 보여주는 쪽을 목표로 합니다.
+최근 `$gram`은 `committing and pushing now!`도 `I'm ...`가 아니라 `Commit and push now.`처럼 요청 의도에 맞춰 보여줍니다.
 
 그래도 요청을 이해하는 데 필요하면 다음 정도는 정리할 수 있습니다.
 
