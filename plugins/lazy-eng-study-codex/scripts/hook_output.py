@@ -76,15 +76,18 @@ def success_context(
         else "Prompt translation/correction hook is active."
     )
     action_note = (
-        "Treat the visible correction line as the primary user request."
+        "Treat the visible understood-request line as the primary user request."
         if grammar_command
         else "Treat the rewritten English prompt as the primary user request."
+    )
+    visible_instruction = (
+        f"Start only the first visible assistant message in this turn "
+        f"with this exact line: {visible_notice}"
     )
     context_lines = [
         command_note,
         f"Rewrite engine: {engine}",
-        "Start only the first visible assistant message in this turn "
-        f"with this exact line: {visible_notice}",
+        visible_instruction,
         "Do not repeat that exact line in later assistant messages for this turn.",
         action_note,
     ]

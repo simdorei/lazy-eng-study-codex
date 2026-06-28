@@ -98,6 +98,8 @@ def build_rewrite_prompt(prompt: str) -> str:
     source = rewrite_source(prompt)
     if contains_korean(source):
         return build_translation_prompt(source)
+    if is_gram_command(prompt):
+        return build_understood_request_prompt(source)
     return build_english_polish_prompt(source)
 
 
@@ -115,6 +117,18 @@ def build_english_polish_prompt(prompt: str) -> str:
 Output only the corrected English request. Do not add markdown or commentary.
 Preserve file paths, commands, code, URLs, IDs, and @mentions exactly.
 Do not change the user's intent.
+
+English request:
+{prompt}"""
+
+
+def build_understood_request_prompt(prompt: str) -> str:
+    return f"""Show the following English Codex user request as the request Codex should answer.
+Output only the understood request. Do not add markdown or commentary.
+Do not polish the wording just to make it more natural.
+Keep short fragments as short fragments when they are already understandable.
+Do not add missing subjects, actors, or details unless the action would otherwise be unclear.
+Preserve file paths, commands, code, URLs, IDs, and @mentions exactly.
 
 English request:
 {prompt}"""

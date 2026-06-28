@@ -99,8 +99,9 @@ class KorToEngHookTest(unittest.TestCase):
             "Start only the first visible assistant message in this turn "
             f"with this exact line: {visible_line}"
         )
+        repeat_guard = "Do not repeat that exact line in later assistant messages for this turn."
         self.assertIn(expected_visible_line, context)
-        self.assertIn("Do not repeat that exact line in later assistant messages for this turn.", context)
+        self.assertIn(repeat_guard, context)
         self.assertIn("Treat the rewritten English prompt as the primary user request.", context)
         self.assertIn("Assistant-understood request: Check the test thread status.", context)
         self.assertIn("테스트 스레드 상태 확인해줘", context)

@@ -12,6 +12,7 @@ SCRIPT_DIR = REPO_ROOT / "plugins" / "lazy-eng-study-codex" / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import kor_to_eng_hook as hook
+from prompt_rewrite import build_rewrite_prompt
 
 
 def isolated_env(settings_path: Path) -> dict[str, str]:
@@ -76,10 +77,25 @@ class GramHookTest(unittest.TestCase):
             "Start only the first visible assistant message in this turn "
             f"with this exact line: {visible_line}"
         )
+        repeat_guard = "Do not repeat that exact line in later assistant messages for this turn."
+        understood_request_note = (
+            "Treat the visible understood-request line as the primary user request."
+        )
         self.assertIn(expected_visible_line, context)
-        self.assertIn("Do not repeat that exact line in later assistant messages for this turn.", context)
-        self.assertIn("Treat the visible correction line as the primary user request.", context)
+        self.assertIn(repeat_guard, context)
+        self.assertIn(understood_request_note, context)
         self.assertIn("Original English:", context)
+
+    def test_gram_prompt_shows_understood_request_without_style_polish(self) -> None:
+        prompt = build_rewrite_prompt("$gram committing and pushing now!")
+
+        self.assertIn("understood request", prompt)
+        self.assertIn("Do not polish the wording just to make it more natural.", prompt)
+        self.assertIn("Keep short fragments as short fragments", prompt)
+        natural_polish_prompt = (
+            "Rewrite the following English Codex user request into natural English."
+        )
+        self.assertNotIn(natural_polish_prompt, prompt)
 
     def test_gram_command_runs_when_translation_setting_is_off(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
