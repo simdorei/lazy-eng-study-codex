@@ -66,21 +66,34 @@ class GramHookTest(unittest.TestCase):
 
         parsed = json.loads(output)
         hook_output = parsed["hookSpecificOutput"]
-        self.assertIn("lazyEngStudyCodex", hook_output)
-        metadata = hook_output["lazyEngStudyCodex"]
         context = hook_output["additionalContext"]
-        self.assertEqual(metadata["visibleLine"], "\uad50\uc815: Is number 2 implemented now?")
-        self.assertTrue(parsed["systemMessage"].startswith(metadata["visibleLine"]))
-        self.assertEqual(metadata["pluginName"], "lazy-eng-study-codex")
-        self.assertEqual(metadata["mode"], "grammar-correction")
-        self.assertEqual(metadata["assistantUnderstoodRequest"], "Is number 2 implemented now?")
-        self.assertIn("$gram understood-request display is active.", context)
-        self.assertIn("Treat the visible correction line as the primary user request.", context)
-        self.assertNotIn("Assistant-understood request:", context)
-        self.assertNotIn("Corrected English:", context)
-        self.assertNotIn("Answer with that exact correction line.", context)
-        self.assertIn("is number2 implimented now?", context)
-        self.assertNotIn("$gram is number2", context)
+        self.assertEqual(hook_output["hookEventName"], "UserPromptSubmit")
+        self.assertTrue(
+            parsed["systemMessage"].startswith("\uad50\uc815: Is number 2 implemented now?"),
+        )
+        self.assertEqual(context, "")
+
+    def test_gram_command_runs_when_translation_setting_is_off(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            fake_translator = Path(temp_dir) / "fake_translator.py"
+            fake_script = "import sys\n_ = sys.stdin.read()\nprint('Show what you understand.')\n"
+            _ = fake_translator.write_text(fake_script, encoding="utf-8")
+            settings_path = Path(temp_dir) / "settings.json"
+            _ = settings_path.write_text('{"enabled": false}\n', encoding="utf-8")
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "$gram show what u understand",
+                "cwd": temp_dir,
+            }
+            env = isolated_env(settings_path)
+            env["CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND"] = f'py -3 "{fake_translator}"'
+
+            output = hook.run_hook(json.dumps(payload), env)
+
+        parsed = json.loads(output)
+        self.assertTrue(
+            parsed["systemMessage"].startswith("\uad50\uc815: Show what you understand."),
+        )
 
 
 if __name__ == "__main__":

@@ -25,7 +25,14 @@ from hook_types import (
 from plugin_settings import DEFAULT_EFFORT as _DEFAULT_EFFORT
 from plugin_settings import DEFAULT_MODEL as _DEFAULT_MODEL
 from plugin_settings import SettingsError, read_hook_settings
-from prompt_rewrite import build_rewrite_prompt, contains_korean, should_polish_english
+from prompt_rewrite import (
+    build_rewrite_prompt,
+    contains_korean,
+    is_gram_command,
+    is_kor_command,
+    rewrite_source,
+    should_polish_english,
+)
 
 DEFAULT_MODEL: Final = _DEFAULT_MODEL
 DEFAULT_EFFORT: Final = _DEFAULT_EFFORT
@@ -198,14 +205,21 @@ def run_hook(raw: str, env: Mapping[str, str]) -> str:
             return ""
         case unreachable:
             assert_never(unreachable)
-    if not (contains_korean(payload.prompt) or should_polish_english(payload.prompt)):
+    manual_rewrite = (
+        is_kor_command(payload.prompt) or is_gram_command(payload.prompt)
+    ) and rewrite_source(payload.prompt) != ""
+    if not (
+        manual_rewrite
+        or contains_korean(payload.prompt)
+        or should_polish_english(payload.prompt)
+    ):
         return ""
     try:
         settings = read_settings(env)
     except SettingsError as exc:
         settings_failure: TranslationResult = TranslationFailure(reason=str(exc))
         return format_hook_output(payload, settings_failure)
-    if not settings.enabled:
+    if not settings.enabled and not manual_rewrite:
         return ""
     cwd = resolve_cwd(payload.cwd)
     if cwd is None:

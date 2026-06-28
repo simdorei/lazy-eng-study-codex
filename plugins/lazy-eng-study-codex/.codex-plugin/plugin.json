@@ -6,7 +6,9 @@
     "name": "simdorei"
   },
   "skills": "./skills/",
-  "hooks": "./hooks/hooks.json",
+  "hooks": [
+    "./hooks/hooks.json"
+  ],
   "interface": {
     "displayName": "Lazy Eng Study Codex",
     "shortDescription": "Study English while using Codex through translation and correction.",

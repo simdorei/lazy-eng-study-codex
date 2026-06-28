@@ -75,7 +75,7 @@ class InstallPluginTest(unittest.TestCase):
     def test_plugin_manifest_declares_hooks_file(self) -> None:
         manifest = read_json_object(PLUGIN_ROOT / ".codex-plugin" / "plugin.json")
 
-        self.assertEqual(manifest["hooks"], "./hooks/hooks.json")
+        self.assertEqual(manifest["hooks"], ["./hooks/hooks.json"])
 
     def test_plugin_manifest_declares_lazy_eng_study_identity(self) -> None:
         manifest = read_json_object(PLUGIN_ROOT / ".codex-plugin" / "plugin.json")

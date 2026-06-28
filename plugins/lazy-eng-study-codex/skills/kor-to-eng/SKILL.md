@@ -38,3 +38,25 @@ Default behavior:
 
 If translation fails, the hook reports the failure instead of silently falling
 back to the Korean original.
+
+## Existing-Session Fallback
+
+Normally the `UserPromptSubmit` hook adds the visible `번역:` or `교정:` line
+before the assistant sees the prompt. If a Korean prompt, `$kor ...`, or
+`$gram ...` reaches the assistant without that visible line, the current Codex
+session did not load this plugin hook.
+
+In that case, do not answer the untranslated prompt directly. Run the plugin
+hook once with the submitted prompt, show the returned visible line first, and
+then answer the translated or corrected request.
+
+Use the same hook entrypoint the plugin installs:
+
+- Windows: pipe a `UserPromptSubmit` JSON payload into
+  `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1`
+- macOS: pipe the same payload into `sh ./scripts/bootstrap.sh`
+
+If the hook returns empty output, continue normally; that means the prompt did
+not need translation or correction under the saved settings. If it returns a
+failure JSON, show the failure instead of silently falling back to the original
+prompt.

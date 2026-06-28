@@ -12,8 +12,20 @@ model, and returns a visible `교정: ...` line. That visible line is the reques
 context Codex should answer. When this skill is active, show that correction
 line if it was not already shown, then handle that request normally.
 
-Do not run a second grammar-correction pass in the assistant response. The hook
-has already produced the understood request.
+If the raw `$gram ...` prompt reaches the assistant without a visible `교정:`
+line from the hook, the hook was not loaded for this session. Do not run a
+second free-form correction in the assistant response. Run the plugin hook once
+with the submitted prompt, show the returned `교정: ...` line first, then answer
+the corrected request.
+
+Use the same hook entrypoint the plugin installs:
+
+- Windows: pipe a `UserPromptSubmit` JSON payload into
+  `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\bootstrap.ps1`
+- macOS: pipe the same payload into `sh ./scripts/bootstrap.sh`
+
+If the hook returns a failure JSON, show the failure instead of silently
+pretending correction worked.
 
 If the user asks about the correction, explain briefly why the corrected
 sentence is more natural.

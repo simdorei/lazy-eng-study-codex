@@ -6,6 +6,7 @@ HANGUL_START: Final = ord("\uac00")
 HANGUL_END: Final = ord("\ud7a3")
 WORD_EDGE_CHARS: Final = ".,!?;:\"'`()[]{}<>"
 GRAM_COMMAND: Final = "$gram"
+KOR_COMMAND: Final = "$kor"
 ENGLISH_POLISH_MARKERS: Final[tuple[str, ...]] = (
     "already installed already",
     "can repo install",
@@ -24,21 +25,36 @@ def contains_korean(text: str) -> bool:
 
 
 def gram_command_text(text: str) -> str | None:
+    return prefixed_command_text(text, GRAM_COMMAND)
+
+
+def kor_command_text(text: str) -> str | None:
+    return prefixed_command_text(text, KOR_COMMAND)
+
+
+def prefixed_command_text(text: str, command: str) -> str | None:
     stripped = text.strip()
     lowered = stripped.lower()
-    if lowered == GRAM_COMMAND:
+    if lowered == command:
         return ""
-    if not lowered.startswith(f"{GRAM_COMMAND} "):
+    if not lowered.startswith(f"{command} "):
         return None
-    return stripped[len(GRAM_COMMAND) :].strip()
+    return stripped[len(command) :].strip()
 
 
 def is_gram_command(text: str) -> bool:
     return gram_command_text(text) is not None
 
 
+def is_kor_command(text: str) -> bool:
+    return kor_command_text(text) is not None
+
+
 def rewrite_source(text: str) -> str:
     command_text = gram_command_text(text)
+    if command_text is not None:
+        return command_text
+    command_text = kor_command_text(text)
     if command_text is not None:
         return command_text
     return text

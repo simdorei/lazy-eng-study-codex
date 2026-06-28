@@ -89,24 +89,12 @@ class KorToEngHookTest(unittest.TestCase):
 
         parsed = parse_json_object(output)
         hook_output = get_object_map(parsed, "hookSpecificOutput")
-        metadata = get_object_map(hook_output, "lazyEngStudyCodex")
         context = get_text(hook_output, "additionalContext")
-        notice_prefix = "First visible assistant message line: "
-        expected_notice = f"{notice_prefix}\ubc88\uc5ed: Check the test thread status."
         system_message = get_text(parsed, "systemMessage")
         self.assertEqual(get_text(hook_output, "hookEventName"), "UserPromptSubmit")
-        self.assertEqual(get_text(metadata, "pluginName"), "lazy-eng-study-codex")
-        self.assertEqual(get_text(metadata, "mode"), "translation")
-        self.assertEqual(
-            get_text(metadata, "assistantUnderstoodRequest"),
-            "Check the test thread status.",
-        )
         self.assertTrue(system_message.startswith("\ubc88\uc5ed: Check the test thread status."))
         self.assertIn("(custom command)", system_message)
-        self.assertIn(expected_notice, context)
-        self.assertIn("Do not repeat that line in the final answer", context)
-        self.assertIn("테스트 스레드 상태 확인해줘", context)
-        self.assertIn("Check the test thread status.", context)
+        self.assertEqual(context, "")
 
     def test_accepts_utf8_bom_prefixed_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -155,10 +143,7 @@ class KorToEngHookTest(unittest.TestCase):
         context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
         system_message = get_text(parsed, "systemMessage")
         self.assertTrue(system_message.startswith("\ubc88\uc5ed: So sentence correction works"))
-        self.assertIn("Original English:", context)
-        self.assertIn("Corrected English:", context)
-        self.assertIn("Then awkward sentence fixing is okay?", context)
-        self.assertIn("So sentence correction works, right?", context)
+        self.assertEqual(context, "")
 
     def test_returns_no_output_when_fluent_english_prompt_arrives(self) -> None:
         payload = {
@@ -171,6 +156,46 @@ class KorToEngHookTest(unittest.TestCase):
         output = hook.run_hook(json.dumps(payload), os.environ)
 
         self.assertEqual(output, "")
+
+    def test_kor_command_translates_once_when_translation_is_off(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            settings_path = Path(temp_dir) / "settings.json"
+            _ = settings_path.write_text('{"enabled": false}\n', encoding="utf-8")
+            fake_translator = Path(temp_dir) / "fake_translator.py"
+            _ = fake_translator.write_text(
+                (
+                    "import sys\n"
+                    "prompt = sys.stdin.read()\n"
+                    "if '$kor' in prompt:\n"
+                    "    raise SystemExit(7)\n"
+                    "print('Check the test thread status.')\n"
+                ),
+                encoding="utf-8",
+            )
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": (
+                    "$kor \ud14c\uc2a4\ud2b8 \uc2a4\ub808\ub4dc "
+                    "\uc0c1\ud0dc \ud655\uc778\ud574\uc918"
+                ),
+                "cwd": temp_dir,
+                "session_id": "session-1",
+            }
+            env = {
+                **isolated_env(settings_path),
+                "CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND": f'py -3 "{fake_translator}"',
+            }
+
+            output = hook.run_hook(json.dumps(payload, ensure_ascii=True), env)
+
+        parsed = parse_json_object(output)
+        hook_output = get_object_map(parsed, "hookSpecificOutput")
+        self.assertEqual(get_text(hook_output, "hookEventName"), "UserPromptSubmit")
+        self.assertTrue(
+            get_text(parsed, "systemMessage").startswith(
+                "\ubc88\uc5ed: Check the test thread status.",
+            ),
+        )
 
     def test_surfaces_translator_failure_instead_of_silent_fallback(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

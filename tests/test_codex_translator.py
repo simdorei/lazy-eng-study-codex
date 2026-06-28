@@ -107,9 +107,11 @@ class CodexTranslatorTest(unittest.TestCase):
 
         parsed = parse_json_object(output)
         context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
-        self.assertIn("gpt-5.4-mini/medium", get_text(parsed, "systemMessage"))
-        self.assertNotIn("SUCCESS: The process", context)
-        self.assertIn("Check the test thread status through default codex.", context)
+        system_message = get_text(parsed, "systemMessage")
+        self.assertIn("gpt-5.4-mini/medium", system_message)
+        self.assertNotIn("SUCCESS: The process", system_message)
+        self.assertIn("Check the test thread status through default codex.", system_message)
+        self.assertEqual(context, "")
 
 
 if __name__ == "__main__":
