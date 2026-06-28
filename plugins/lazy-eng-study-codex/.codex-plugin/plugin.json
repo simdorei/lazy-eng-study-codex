@@ -12,7 +12,7 @@
   "interface": {
     "displayName": "Lazy Eng Study Codex",
     "shortDescription": "Study English while using Codex through translation and correction.",
-    "longDescription": "Lazy Eng Study Codex adds a UserPromptSubmit hook that detects Korean prompts, prepares Python through a portable bootstrap when needed, translates Korean to English, corrects explicit $gram English sentences, and injects visible output plus Codex-readable context. Use $kortoeng-model or scripts/configure_model.ps1 after install to choose Spark, Mini, or GPT-5.5.",
+    "longDescription": "Lazy Eng Study Codex adds a UserPromptSubmit hook that detects Korean prompts, prepares Python through a portable bootstrap when needed, translates Korean to English, corrects explicit $gram English sentences, and returns the visible prompt line Codex should answer. Use $kortoeng-model or scripts/configure_model.ps1 after install to choose Spark, Mini, or GPT-5.5.",
     "developerName": "simdorei",
     "category": "Developer Tools",
     "capabilities": [

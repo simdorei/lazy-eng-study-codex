@@ -7,7 +7,7 @@ description: Use when the user wants Korean Codex prompts translated to English 
 
 This plugin installs a `UserPromptSubmit` hook. When a prompt contains Korean
 text, the hook asks a translator to produce English, then adds that English as
-visible hook output and Codex-readable context.
+visible hook output that Codex should answer.
 
 Default behavior:
 

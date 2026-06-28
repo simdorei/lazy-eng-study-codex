@@ -4,5 +4,6 @@
 __pycache__/
 *.py[cod]
 *.log
+handoff.md
 node_modules/
 dist/

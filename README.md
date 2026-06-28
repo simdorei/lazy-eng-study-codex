@@ -171,17 +171,7 @@ For Korean input:
 테스트 스레드 상태 확인해줘
 ```
 
-Codex receives extra context like:
-
-```text
-Korean original:
-테스트 스레드 상태 확인해줘
-
-English translation:
-Check the test thread status.
-```
-
-The assistant reply should start with a visible line like:
+The hook output contains a visible `systemMessage` line like:
 
 ```text
 번역: Check the test thread status.
@@ -222,12 +212,13 @@ Manual hook smoke test with a custom translator:
 ```powershell
 $env:CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND = 'py -3 .\tests\fixtures\fake_translator.py'
 @'
-{"hook_event_name":"UserPromptSubmit","prompt":"\ud14c\uc2a4\ud2b8 \uc2a4\ub808\ub4dc \uc0c1\ud0dc \ud655\uc778\ud574\uc918","cwd":"C:\\repos\\simdorei\\lazy-eng-study-codex","session_id":"manual"}
+{"hook_event_name":"UserPromptSubmit","prompt":"\ud14c\uc2a4\ud2b8 \uc2a4\ub808\ub4dc \uc0c1\ud0dc \ud655\uc778\ud574\uc918","cwd":".","session_id":"manual"}
 '@ | powershell -NoProfile -ExecutionPolicy Bypass -File .\plugins\lazy-eng-study-codex\scripts\bootstrap.ps1
 ```
 
-The output should be JSON with `systemMessage` and
-`hookSpecificOutput.additionalContext`.
+The output should be JSON with `systemMessage`. On successful translation or
+correction, `hookSpecificOutput.additionalContext` is intentionally empty; the
+visible `systemMessage` is the request Codex should answer.
 
 ## Non-Goals
 
