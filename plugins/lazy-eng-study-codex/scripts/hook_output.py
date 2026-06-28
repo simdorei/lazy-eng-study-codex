@@ -83,7 +83,9 @@ def success_context(
     context_lines = [
         command_note,
         f"Rewrite engine: {engine}",
-        f"Start the assistant response with this exact line: {visible_notice}",
+        "Start only the first visible assistant message in this turn "
+        f"with this exact line: {visible_notice}",
+        "Do not repeat that exact line in later assistant messages for this turn.",
         action_note,
     ]
     if not grammar_command:

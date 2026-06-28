@@ -95,8 +95,12 @@ class KorToEngHookTest(unittest.TestCase):
         self.assertTrue(system_message.startswith("\ubc88\uc5ed: Check the test thread status."))
         self.assertIn("(custom command)", system_message)
         visible_line = "번역: Check the test thread status."
-        expected_visible_line = f"Start the assistant response with this exact line: {visible_line}"
+        expected_visible_line = (
+            "Start only the first visible assistant message in this turn "
+            f"with this exact line: {visible_line}"
+        )
         self.assertIn(expected_visible_line, context)
+        self.assertIn("Do not repeat that exact line in later assistant messages for this turn.", context)
         self.assertIn("Treat the rewritten English prompt as the primary user request.", context)
         self.assertIn("Assistant-understood request: Check the test thread status.", context)
         self.assertIn("테스트 스레드 상태 확인해줘", context)

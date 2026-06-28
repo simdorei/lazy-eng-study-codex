@@ -72,8 +72,12 @@ class GramHookTest(unittest.TestCase):
             parsed["systemMessage"].startswith("\uad50\uc815: Is number 2 implemented now?"),
         )
         visible_line = "교정: Is number 2 implemented now?"
-        expected_visible_line = f"Start the assistant response with this exact line: {visible_line}"
+        expected_visible_line = (
+            "Start only the first visible assistant message in this turn "
+            f"with this exact line: {visible_line}"
+        )
         self.assertIn(expected_visible_line, context)
+        self.assertIn("Do not repeat that exact line in later assistant messages for this turn.", context)
         self.assertIn("Treat the visible correction line as the primary user request.", context)
         self.assertIn("Original English:", context)
 
