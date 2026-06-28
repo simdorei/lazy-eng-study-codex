@@ -138,6 +138,10 @@ def run_codex_translator(request: TranslationRequest) -> TranslationResult:
         return TranslationFailure(
             reason=f"codex executable not found: {request.settings.codex_bin}",
         )
+    except PermissionError as exc:
+        return TranslationFailure(
+            reason=f"codex executable could not be started: {request.settings.codex_bin}: {exc}",
+        )
     except subprocess.TimeoutExpired:
         return TranslationFailure(
             reason=f"codex translation timed out after {request.settings.timeout_seconds}s",

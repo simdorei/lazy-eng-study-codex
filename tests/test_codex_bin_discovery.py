@@ -52,6 +52,32 @@ class CodexBinDiscoveryTest(unittest.TestCase):
 
         self.assertEqual(codex_bin, str(stable_codex))
 
+    def test_ignores_windowsapps_configured_path(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            install_root = Path(temp_dir) / "OpenAI" / "Codex" / "bin"
+            stable_codex = install_root / "codex.exe"
+            windowsapps_codex = (
+                Path(temp_dir)
+                / "WindowsApps"
+                / "OpenAI.Codex"
+                / "app"
+                / "resources"
+                / "codex.exe"
+            )
+            stable_codex.parent.mkdir(parents=True)
+            windowsapps_codex.parent.mkdir(parents=True)
+            _ = stable_codex.write_text("", encoding="utf-8")
+            _ = windowsapps_codex.write_text("", encoding="utf-8")
+            env = {
+                "CODEX_KOR_TO_ENG_CODEX_BIN": str(windowsapps_codex),
+                "LOCALAPPDATA": temp_dir,
+                "PATH": "",
+            }
+
+            codex_bin = read_codex_bin(env)
+
+        self.assertEqual(codex_bin, str(stable_codex))
+
     def test_uses_macos_app_support_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             fake_codex = (

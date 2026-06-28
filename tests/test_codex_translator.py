@@ -111,7 +111,11 @@ class CodexTranslatorTest(unittest.TestCase):
         self.assertIn("gpt-5.4-mini/medium", system_message)
         self.assertNotIn("SUCCESS: The process", system_message)
         self.assertIn("Check the test thread status through default codex.", system_message)
-        self.assertEqual(context, "")
+        self.assertIn(
+            "Assistant-understood request: Check the test thread status through default codex.",
+            context,
+        )
+        self.assertIn("Treat the rewritten English prompt as the primary user request.", context)
 
 
 if __name__ == "__main__":

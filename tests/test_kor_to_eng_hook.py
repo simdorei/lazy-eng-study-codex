@@ -94,7 +94,13 @@ class KorToEngHookTest(unittest.TestCase):
         self.assertEqual(get_text(hook_output, "hookEventName"), "UserPromptSubmit")
         self.assertTrue(system_message.startswith("\ubc88\uc5ed: Check the test thread status."))
         self.assertIn("(custom command)", system_message)
-        self.assertEqual(context, "")
+        visible_line = "번역: Check the test thread status."
+        expected_visible_line = f"Start the assistant response with this exact line: {visible_line}"
+        self.assertIn(expected_visible_line, context)
+        self.assertIn("Treat the rewritten English prompt as the primary user request.", context)
+        self.assertIn("Assistant-understood request: Check the test thread status.", context)
+        self.assertIn("테스트 스레드 상태 확인해줘", context)
+        self.assertIn("English translation:\nCheck the test thread status.", context)
 
     def test_accepts_utf8_bom_prefixed_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -143,7 +149,10 @@ class KorToEngHookTest(unittest.TestCase):
         context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
         system_message = get_text(parsed, "systemMessage")
         self.assertTrue(system_message.startswith("\ubc88\uc5ed: So sentence correction works"))
-        self.assertEqual(context, "")
+        self.assertIn("Original English:", context)
+        self.assertIn("Corrected English:", context)
+        self.assertIn("Then awkward sentence fixing is okay?", context)
+        self.assertIn("So sentence correction works, right?", context)
 
     def test_returns_no_output_when_fluent_english_prompt_arrives(self) -> None:
         payload = {
@@ -219,7 +228,7 @@ class KorToEngHookTest(unittest.TestCase):
         hook_output = get_object_map(parsed, "hookSpecificOutput")
         context = get_text(hook_output, "additionalContext")
         self.assertIn("translation failed", get_text(parsed, "systemMessage"))
-        self.assertIn("codex executable not found", context)
+        self.assertIn("codex executable", context)
         self.assertIn("테스트 스레드 상태 확인해줘", context)
 
     def test_surfaces_missing_cwd_instead_of_using_process_cwd(self) -> None:

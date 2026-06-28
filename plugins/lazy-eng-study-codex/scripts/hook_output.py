@@ -21,7 +21,13 @@ def format_hook_output(payload: PromptPayload, result: TranslationResult) -> str
         case TranslationSuccess(english=english, engine=engine):
             visible_label = "\uad50\uc815" if grammar_command else "\ubc88\uc5ed"
             visible_notice = f"{visible_label}: {limit_visible(english)}"
-            context = ""
+            context = success_context(
+                source_prompt,
+                english,
+                engine=engine,
+                visible_notice=visible_notice,
+                grammar_command=grammar_command,
+            )
             system_message = f"{visible_notice} ({engine})"
         case TranslationFailure(reason=reason):
             original_label = (
@@ -48,6 +54,51 @@ def format_hook_output(payload: PromptPayload, result: TranslationResult) -> str
         },
     }
     return json.dumps(output, ensure_ascii=True) + "\n"
+
+
+def success_context(
+    source_prompt: str,
+    english: str,
+    *,
+    engine: str,
+    visible_notice: str,
+    grammar_command: bool,
+) -> str:
+    original_label = "Korean original:" if contains_korean(source_prompt) else "Original English:"
+    rewritten_label = (
+        "English translation:"
+        if contains_korean(source_prompt) and not grammar_command
+        else "Corrected English:"
+    )
+    command_note = (
+        "$gram understood-request display is active."
+        if grammar_command
+        else "Prompt translation/correction hook is active."
+    )
+    action_note = (
+        "Treat the visible correction line as the primary user request."
+        if grammar_command
+        else "Treat the rewritten English prompt as the primary user request."
+    )
+    context_lines = [
+        command_note,
+        f"Rewrite engine: {engine}",
+        f"Start the assistant response with this exact line: {visible_notice}",
+        action_note,
+    ]
+    if not grammar_command:
+        context_lines.append(f"Assistant-understood request: {english}")
+    context_lines.extend(
+        [
+            "Use the original prompt only to resolve ambiguity.",
+            "",
+            original_label,
+            source_prompt,
+        ],
+    )
+    if not grammar_command:
+        context_lines.extend(["", rewritten_label, english])
+    return "\n".join(context_lines)
 
 
 def format_preflight_failure(reason: str) -> str:

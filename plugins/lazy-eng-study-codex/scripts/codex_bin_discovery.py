@@ -22,7 +22,11 @@ def read_codex_bin(env: Mapping[str, str]) -> str:
 
 def resolve_codex_bin(env: Mapping[str, str]) -> CodexBinResolution:
     configured = empty_to_none(env.get("CODEX_KOR_TO_ENG_CODEX_BIN"))
-    if configured is not None and Path(configured).is_file():
+    if (
+        configured is not None
+        and Path(configured).is_file()
+        and not is_windowsapps_codex_bin(configured)
+    ):
         return CodexBinResolution(
             path=str(Path(configured).resolve()),
             source="configured",
@@ -30,19 +34,19 @@ def resolve_codex_bin(env: Mapping[str, str]) -> CodexBinResolution:
         )
     ignored_configured_path = configured
 
-    discovered = shutil.which("codex", path=env.get("PATH"))
-    if discovered is not None:
-        return CodexBinResolution(
-            path=str(Path(discovered).resolve()),
-            source="path",
-            ignored_configured_path=ignored_configured_path,
-        )
-
     app_install = find_app_codex_bin(env)
     if app_install is not None:
         return CodexBinResolution(
             path=app_install,
             source="app_install",
+            ignored_configured_path=ignored_configured_path,
+        )
+
+    discovered = shutil.which("codex", path=env.get("PATH"))
+    if discovered is not None and not is_windowsapps_codex_bin(discovered):
+        return CodexBinResolution(
+            path=str(Path(discovered).resolve()),
+            source="path",
             ignored_configured_path=ignored_configured_path,
         )
 
@@ -113,3 +117,8 @@ def empty_to_none(value: str | None) -> str | None:
     if stripped == "":
         return None
     return stripped
+
+
+def is_windowsapps_codex_bin(path: str) -> bool:
+    parts = {part.lower() for part in Path(path).parts}
+    return "windowsapps" in parts and Path(path).name.lower() == "codex.exe"

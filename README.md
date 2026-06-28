@@ -107,6 +107,18 @@ global for every loaded hook, including old and new threads that have the hook.
 If a thread never loaded the hook, the plugin code is not being called and the
 Codex app must reload the plugin list first.
 
+### Hook Issue Note
+
+On Windows, do not save a `codex_bin` path under `C:\Program Files\WindowsApps`.
+That package path can exist but still fail when the hook starts the child Codex
+translator, producing `WinError 5` access denied. Use the user-local Codex CLI
+under `%LOCALAPPDATA%\OpenAI\Codex\bin\...\codex.exe` instead.
+
+Successful hook output must also include internal `additionalContext`, not just
+the visible `systemMessage`. The visible line is what Codex shows first, while
+`additionalContext` tells the assistant to treat the rewritten English request
+as the primary request.
+
 Examples from the plugin root:
 
 ```powershell
@@ -217,8 +229,8 @@ $env:CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND = 'py -3 .\tests\fixtures\fake_translat
 ```
 
 The output should be JSON with `systemMessage`. On successful translation or
-correction, `hookSpecificOutput.additionalContext` is intentionally empty; the
-visible `systemMessage` is the request Codex should answer.
+correction, `hookSpecificOutput.additionalContext` should include the exact
+visible line plus the rewritten English request Codex should answer.
 
 ## Non-Goals
 

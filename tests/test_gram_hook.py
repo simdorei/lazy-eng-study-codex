@@ -71,7 +71,11 @@ class GramHookTest(unittest.TestCase):
         self.assertTrue(
             parsed["systemMessage"].startswith("\uad50\uc815: Is number 2 implemented now?"),
         )
-        self.assertEqual(context, "")
+        visible_line = "교정: Is number 2 implemented now?"
+        expected_visible_line = f"Start the assistant response with this exact line: {visible_line}"
+        self.assertIn(expected_visible_line, context)
+        self.assertIn("Treat the visible correction line as the primary user request.", context)
+        self.assertIn("Original English:", context)
 
     def test_gram_command_runs_when_translation_setting_is_off(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
