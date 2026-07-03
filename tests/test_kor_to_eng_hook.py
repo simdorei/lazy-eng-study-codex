@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from collections.abc import Mapping
 from pathlib import Path
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = REPO_ROOT / "plugins" / "lazy-eng-study-codex" / "scripts"
@@ -126,6 +127,60 @@ class KorToEngHookTest(unittest.TestCase):
             }
 
             output = hook.run_hook(f"\ufeff{json.dumps(payload)}", env)
+
+        parsed = parse_json_object(output)
+        self.assertIn("Check the test thread status.", get_text(parsed, "systemMessage"))
+
+    def test_custom_translator_receives_sanitized_child_env(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            parent = Path(temp_dir) / ".codex"
+            parent.mkdir()
+            _ = (parent / "auth.json").write_text('{"token":"test"}\n', encoding="utf-8")
+            _ = (parent / "config.toml").write_text(
+                'service_tier = "anything"\n',
+                encoding="utf-8",
+            )
+            fake_translator = Path(temp_dir) / "fake_translator.py"
+            _ = fake_translator.write_text(
+                (
+                    "import os\n"
+                    "import sys\n"
+                    "from pathlib import Path\n"
+                    "_ = sys.stdin.read()\n"
+                    "if 'UNRELATED_PARENT_SETTING' in os.environ:\n"
+                    "    raise SystemExit('unrelated env leaked')\n"
+                    "if 'CODEX_SHOULD_NOT_LEAK' in os.environ:\n"
+                    "    raise SystemExit('codex env leaked')\n"
+                    "if os.environ.get('CODEX_KOR_TO_ENG_DISABLED') != '1':\n"
+                    "    raise SystemExit('recursive guard missing')\n"
+                    "codex_home = Path(os.environ['CODEX_HOME'])\n"
+                    "if (codex_home / 'config.toml').read_text(encoding='utf-8') != '':\n"
+                    "    raise SystemExit('parent config leaked')\n"
+                    "print('Check the test thread status.')\n"
+                ),
+                encoding="utf-8",
+            )
+            payload = {
+                "hook_event_name": "UserPromptSubmit",
+                "prompt": "테스트 스레드 상태 확인해줘",
+                "cwd": temp_dir,
+                "session_id": "session-1",
+            }
+            env = {
+                **isolated_env(Path(temp_dir) / "settings.json"),
+                "CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND": f'py -3 "{fake_translator}"',
+            }
+
+            with patch.dict(
+                os.environ,
+                {
+                    "CODEX_HOME": str(parent),
+                    "CODEX_SHOULD_NOT_LEAK": "1",
+                    "UNRELATED_PARENT_SETTING": "leak",
+                },
+                clear=False,
+            ):
+                output = hook.run_hook(json.dumps(payload), env)
 
         parsed = parse_json_object(output)
         self.assertIn("Check the test thread status.", get_text(parsed, "systemMessage"))

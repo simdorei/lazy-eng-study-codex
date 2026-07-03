@@ -92,7 +92,10 @@ def run_custom_translator(request: TranslationRequest) -> TranslationResult:
     if command is None:
         return TranslationFailure(reason="custom translator command is missing")
     translation_prompt = build_rewrite_prompt(request.prompt)
-    env = translator_env(os.environ)
+    try:
+        env = child_codex_env(os.environ)
+    except OSError as exc:
+        return TranslationFailure(reason=f"translator child home could not be prepared: {exc}")
     try:
         completed = subprocess.run(
             command,
@@ -193,12 +196,6 @@ def build_codex_command(settings: HookSettings, prompt: str) -> list[str]:
         'model_verbosity="low"',
         build_rewrite_prompt(prompt),
     ]
-
-
-def translator_env(env: Mapping[str, str]) -> dict[str, str]:
-    prepared = dict(env)
-    prepared["CODEX_KOR_TO_ENG_DISABLED"] = "1"
-    return prepared
 
 
 def run_hook(raw: str, env: Mapping[str, str]) -> str:

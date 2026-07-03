@@ -23,7 +23,15 @@ class CodexChildHomeTest(unittest.TestCase):
                 encoding="utf-8",
             )
 
-            env = child_codex_env({"CODEX_HOME": str(parent)})
+            env = child_codex_env(
+                {
+                    "CODEX_HOME": str(parent),
+                    "CODEX_SHOULD_NOT_LEAK": "1",
+                    "OPENAI_API_KEY": "test-key",
+                    "PATH": "test-path",
+                    "UNRELATED_PARENT_SETTING": "leak",
+                },
+            )
 
             child = Path(env["CODEX_HOME"])
             self.assertNotEqual(child, parent)
@@ -33,6 +41,10 @@ class CodexChildHomeTest(unittest.TestCase):
                 '{"token":"test"}\n',
             )
             self.assertEqual(env["CODEX_KOR_TO_ENG_DISABLED"], "1")
+            self.assertEqual(env["OPENAI_API_KEY"], "test-key")
+            self.assertEqual(env["PATH"], "test-path")
+            self.assertNotIn("CODEX_SHOULD_NOT_LEAK", env)
+            self.assertNotIn("UNRELATED_PARENT_SETTING", env)
 
 
 if __name__ == "__main__":
