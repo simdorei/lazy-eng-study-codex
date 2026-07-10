@@ -72,18 +72,25 @@ class GramHookTest(unittest.TestCase):
         self.assertTrue(
             parsed["systemMessage"].startswith("\uad50\uc815: Is number 2 implemented now?"),
         )
-        visible_line = "교정: Is number 2 implemented now?"
+        visible_line = "\uad50\uc815: Is number 2 implemented now?"
         expected_visible_line = (
             "Start only the first visible assistant message in this turn "
             f"with this exact line: {visible_line}"
         )
         repeat_guard = "Do not repeat that exact line in later assistant messages for this turn."
-        understood_request_note = (
-            "Treat the visible understood-request line as the primary user request."
+        answer_instruction = (
+            "After printing the exact visible correction line, answer the understood request "
+            "normally in the same assistant message."
+        )
+        stop_guard = (
+            "Do not stop after only the correction line unless the understood request itself "
+            "asks only for correction."
         )
         self.assertIn(expected_visible_line, context)
         self.assertIn(repeat_guard, context)
-        self.assertIn(understood_request_note, context)
+        self.assertIn(answer_instruction, context)
+        self.assertIn(stop_guard, context)
+        self.assertIn("Assistant-understood request: Is number 2 implemented now?", context)
         self.assertIn("Original English:", context)
 
     def test_gram_prompt_shows_actionable_request_without_actor_drift(self) -> None:

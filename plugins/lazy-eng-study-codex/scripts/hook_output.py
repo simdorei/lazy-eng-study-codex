@@ -12,6 +12,20 @@ from hook_types import (
 from prompt_rewrite import contains_korean, is_gram_command, rewrite_source
 
 MAX_VISIBLE_CHARS: Final = 700
+GRAM_ANSWER_INSTRUCTION_START: Final = (
+    "After printing the exact visible correction line, answer the understood request normally"
+)
+GRAM_ANSWER_INSTRUCTION_MIDDLE: Final = "in the same assistant message."
+GRAM_ANSWER_INSTRUCTION_END: Final = (
+    "Do not stop after only the correction line unless the understood request itself asks only "
+    "for correction."
+)
+GRAM_ANSWER_INSTRUCTION_PARTS: Final[tuple[str, str, str]] = (
+    GRAM_ANSWER_INSTRUCTION_START,
+    GRAM_ANSWER_INSTRUCTION_MIDDLE,
+    GRAM_ANSWER_INSTRUCTION_END,
+)
+GRAM_ANSWER_INSTRUCTION: Final = " ".join(GRAM_ANSWER_INSTRUCTION_PARTS)
 
 
 def format_hook_output(payload: PromptPayload, result: TranslationResult) -> str:
@@ -76,7 +90,7 @@ def success_context(
         else "Prompt translation/correction hook is active."
     )
     action_note = (
-        "Treat the visible understood-request line as the primary user request."
+        GRAM_ANSWER_INSTRUCTION
         if grammar_command
         else "Treat the rewritten English prompt as the primary user request."
     )
@@ -90,9 +104,8 @@ def success_context(
         visible_instruction,
         "Do not repeat that exact line in later assistant messages for this turn.",
         action_note,
+        f"Assistant-understood request: {english}",
     ]
-    if not grammar_command:
-        context_lines.append(f"Assistant-understood request: {english}")
     context_lines.extend(
         [
             "Use the original prompt only to resolve ambiguity.",
