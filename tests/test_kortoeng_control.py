@@ -55,7 +55,7 @@ class KortoengControlTest(unittest.TestCase):
 
             off_exit, off_output = run_control(["off"], env)
             on_exit, on_output = run_control(["on"], env)
-            model_exit, model_output = run_control(["model", "mini"], env)
+            model_exit, model_output = run_control(["model", "gpt55"], env)
             bin_exit, bin_output = run_control(["codex-bin"], env)
             settings = read_settings(settings_path)
         self.assertEqual(off_exit, 0)
@@ -68,11 +68,11 @@ class KortoengControlTest(unittest.TestCase):
         self.assertIn("hook_scope=loaded_codex_sessions", on_output)
         self.assertIn("read on/off settings every time the hook runs", on_output)
         self.assertIn("restart or reopen Codex only if", on_output)
-        self.assertIn("model=gpt-5.4-mini", model_output)
+        self.assertIn("model=gpt-5.5", model_output)
         self.assertIn("codex_bin=", bin_output)
         self.assertEqual(settings["enabled"], True)
-        self.assertEqual(settings["model"], "gpt-5.4-mini")
-        self.assertEqual(settings["timeout_seconds"], 45)
+        self.assertEqual(settings["model"], "gpt-5.5")
+        self.assertEqual(settings["timeout_seconds"], 90)
         self.assertIn("codex", str(settings["codex_bin"]).lower())
 
     def test_status_reports_when_codex_is_not_found(self) -> None:
@@ -146,7 +146,7 @@ class KortoengControlTest(unittest.TestCase):
             _ = settings_path.write_text('{"enabled": true}\n', encoding="utf-8")
             env = {"CODEX_KOR_TO_ENG_SETTINGS_FILE": str(settings_path)}
 
-            exit_code, output = run_control(["model", "unknown"], env)
+            exit_code, output = run_control(["model", "mini"], env)
             settings = read_settings(settings_path)
 
         self.assertEqual(exit_code, 2)

@@ -142,8 +142,8 @@ class BootstrapInstallTest(unittest.TestCase):
         self.assertIn("python_source=configured", completed.stdout)
         self.assertIn("install=ok", completed.stdout)
         self.assertEqual(settings["enabled"], True)
-        self.assertEqual(settings["model"], "gpt-5.4-mini")
-        self.assertEqual(settings["timeout_seconds"], 45)
+        self.assertEqual(settings["model"], "gpt-5.5")
+        self.assertEqual(settings["timeout_seconds"], 90)
         self.assertIn("codex", str(settings["codex_bin"]).lower())
 
     def test_bootstrap_ps1_runs_hook_with_configured_python(self) -> None:

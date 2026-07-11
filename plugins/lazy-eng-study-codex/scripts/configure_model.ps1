@@ -1,5 +1,5 @@
 param(
-    [ValidateSet('spark', 'mini', 'gpt55')]
+    [ValidateSet('spark', 'gpt55')]
     [string]$Model = ''
 )
 
@@ -12,14 +12,12 @@ function Select-KorToEngModel {
 
     Write-Host 'Choose Korean-to-English translation model:'
     Write-Host '  1. Spark     gpt-5.3-codex-spark'
-    Write-Host '  2. Mini      gpt-5.4-mini'
-    Write-Host '  3. GPT-5.5   gpt-5.5'
-    $choice = Read-Host 'Enter 1, 2, or 3'
+    Write-Host '  2. GPT-5.5   gpt-5.5'
+    $choice = Read-Host 'Enter 1 or 2'
 
     switch ($choice) {
         '1' { return 'spark' }
-        '2' { return 'mini' }
-        '3' { return 'gpt55' }
+        '2' { return 'gpt55' }
         default { throw "Unknown choice: $choice" }
     }
 }

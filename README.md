@@ -144,7 +144,7 @@ $gram is number2 implimented now?
 기본 번역 모델은 다음입니다.
 
 ```text
-gpt-5.4-mini + medium reasoning effort
+gpt-5.5 + medium reasoning effort
 ```
 
 계정에서 Spark를 사용할 수 있다면 이렇게 바꿀 수 있습니다.
@@ -153,7 +153,7 @@ gpt-5.4-mini + medium reasoning effort
 $kortoeng-model spark
 ```
 
-Spark를 사용할 수 없다면 기본값을 그대로 두면 됩니다.
+Spark를 사용할 수 없다면 기본값인 GPT-5.5를 그대로 두면 됩니다.
 
 ## 문제가 생겼을 때
 

@@ -16,7 +16,7 @@ function Invoke-Bootstrap {
 Write-Output 'Lazy Eng Study Codex install starting'
 Invoke-Bootstrap @('-EnsurePython')
 Invoke-Bootstrap @('install_plugin.py')
-Invoke-Bootstrap @('kortoeng_control.py', 'model', 'mini')
+Invoke-Bootstrap @('kortoeng_control.py', 'model', 'gpt55')
 Invoke-Bootstrap @('kortoeng_control.py', 'on')
 Invoke-Bootstrap @('kortoeng_control.py', 'codex-bin')
 Invoke-Bootstrap @('kortoeng_control.py', 'status')

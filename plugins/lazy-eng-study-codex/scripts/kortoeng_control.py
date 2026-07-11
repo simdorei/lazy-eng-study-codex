@@ -88,7 +88,7 @@ def set_enabled(env: Mapping[str, str], *, enabled: bool) -> int:
 
 def set_model(env: Mapping[str, str], args: Sequence[str]) -> int:
     if len(args) != 1:
-        _ = sys.stdout.write("missing model. Use one of: spark, mini, gpt55\n")
+        _ = sys.stdout.write("missing model. Use one of: spark, gpt55\n")
         return 2
 
     choice = resolve_model_choice(args[0])
@@ -127,9 +127,9 @@ def save_codex_bin(env: Mapping[str, str]) -> int:
 
 def show_usage(*, exit_code: int = 0) -> int:
     models = ", ".join(MODEL_CHOICES)
-    usage = "usage: kortoeng_control.py status|on|off|model <spark|mini|gpt55>|codex-bin\n"
+    usage = "usage: kortoeng_control.py status|on|off|model <spark|gpt55>|codex-bin\n"
     _ = sys.stdout.write(usage)
-    _ = sys.stdout.write(f"models: spark, mini, gpt55, {models}\n")
+    _ = sys.stdout.write(f"models: spark, gpt55, {models}\n")
     return exit_code
 
 

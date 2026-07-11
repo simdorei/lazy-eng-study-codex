@@ -61,19 +61,19 @@ def get_object_map(value: Mapping[str, JsonValue], key: str) -> JsonObject:
 
 
 class CodexTranslatorTest(unittest.TestCase):
-    def test_default_codex_command_uses_mini_model_and_medium_effort(self) -> None:
+    def test_default_codex_command_uses_gpt55_model_and_medium_effort(self) -> None:
         settings = HookSettings(
             enabled=True,
             custom_command=None,
             codex_bin="codex",
             model=hook.DEFAULT_MODEL,
             effort=hook.DEFAULT_EFFORT,
-            timeout_seconds=45,
+            timeout_seconds=90,
         )
 
         command = hook.build_codex_command(settings, "테스트해줘")
 
-        self.assertIn("gpt-5.4-mini", command)
+        self.assertIn("gpt-5.5", command)
         self.assertIn('model_reasoning_effort="medium"', command)
         self.assertIn("--ephemeral", command)
         self.assertEqual(command[1:4], ["--ask-for-approval", "never", "exec"])
@@ -108,7 +108,7 @@ class CodexTranslatorTest(unittest.TestCase):
         parsed = parse_json_object(output)
         context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
         system_message = get_text(parsed, "systemMessage")
-        self.assertIn("gpt-5.4-mini/medium", system_message)
+        self.assertIn("gpt-5.5/medium", system_message)
         self.assertNotIn("SUCCESS: The process", system_message)
         self.assertIn("Check the test thread status through default codex.", system_message)
         self.assertIn(

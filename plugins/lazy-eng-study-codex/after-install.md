@@ -46,10 +46,9 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure_model.ps
 Options:
 
 - `1` Spark: `gpt-5.3-codex-spark`
-- `2` Mini: `gpt-5.4-mini`
-- `3` GPT-5.5: `gpt-5.5`
+- `2` GPT-5.5: `gpt-5.5`
 
 The script stores the choice in the same JSON settings file used by
-`$kortoeng-model`. It also stores the matching timeout: 45 seconds for Mini, 90
-seconds for Spark and GPT-5.5. Environment variables are only fallback defaults
+`$kortoeng-model`. It also stores the matching timeout: 90 seconds for Spark
+and GPT-5.5. Environment variables are only fallback defaults
 when the settings file has no stored model.
