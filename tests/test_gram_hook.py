@@ -91,7 +91,6 @@ class GramHookTest(unittest.TestCase):
         self.assertIn(answer_instruction, context)
         self.assertIn(stop_guard, context)
         self.assertIn("Assistant-understood request: Is number 2 implemented now?", context)
-        self.assertIn("Original English:", context)
 
     def test_gram_prompt_shows_actionable_request_without_actor_drift(self) -> None:
         prompt = build_rewrite_prompt("$gram committing and pushing now!")

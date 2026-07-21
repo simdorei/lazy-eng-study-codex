@@ -36,7 +36,6 @@ def format_hook_output(payload: PromptPayload, result: TranslationResult) -> str
             visible_label = "\uad50\uc815" if grammar_command else "\ubc88\uc5ed"
             visible_notice = f"{visible_label}: {limit_visible(english)}"
             context = success_context(
-                source_prompt,
                 english,
                 engine=engine,
                 visible_notice=visible_notice,
@@ -71,19 +70,12 @@ def format_hook_output(payload: PromptPayload, result: TranslationResult) -> str
 
 
 def success_context(
-    source_prompt: str,
     english: str,
     *,
     engine: str,
     visible_notice: str,
     grammar_command: bool,
 ) -> str:
-    original_label = "Korean original:" if contains_korean(source_prompt) else "Original English:"
-    rewritten_label = (
-        "English translation:"
-        if contains_korean(source_prompt) and not grammar_command
-        else "Corrected English:"
-    )
     command_note = (
         "$gram understood-request display is active."
         if grammar_command
@@ -105,17 +97,8 @@ def success_context(
         "Do not repeat that exact line in later assistant messages for this turn.",
         action_note,
         f"Assistant-understood request: {english}",
+        "Use the original prompt only to resolve ambiguity.",
     ]
-    context_lines.extend(
-        [
-            "Use the original prompt only to resolve ambiguity.",
-            "",
-            original_label,
-            source_prompt,
-        ],
-    )
-    if not grammar_command:
-        context_lines.extend(["", rewritten_label, english])
     return "\n".join(context_lines)
 
 

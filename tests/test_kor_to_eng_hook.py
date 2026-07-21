@@ -14,7 +14,8 @@ SCRIPT_DIR = REPO_ROOT / "plugins" / "lazy-eng-study-codex" / "scripts"
 sys.path.insert(0, str(SCRIPT_DIR))
 
 import kor_to_eng_hook as hook
-from hook_types import JsonObject, JsonValue
+from hook_output import format_hook_output
+from hook_types import JsonObject, JsonValue, PromptPayload, TranslationSuccess
 
 
 def isolated_env(settings_path: Path, extra: Mapping[str, str] | None = None) -> dict[str, str]:
@@ -68,6 +69,22 @@ def get_object_map(value: Mapping[str, JsonValue], key: str) -> JsonObject:
 
 
 class KorToEngHookTest(unittest.TestCase):
+    def test_success_context_omits_source_and_keeps_two_rewrite_copies(self) -> None:
+        def context_for(source: str, english: str) -> str:
+            output = format_hook_output(
+                PromptPayload(prompt=source, cwd=str(REPO_ROOT)),
+                TranslationSuccess(english=english, engine="test"),
+            )
+            parsed = parse_json_object(output)
+            return get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
+
+        short_source_context = context_for("가", "x")
+        long_source_context = context_for("가" * 200, "x")
+        longer_rewrite_context = context_for("가", "xx")
+
+        self.assertEqual(short_source_context, long_source_context)
+        self.assertEqual(len(longer_rewrite_context) - len(short_source_context), 2)
+
     def test_adds_visible_english_context_when_korean_prompt_arrives(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             fake_translator = Path(temp_dir) / "fake_translator.py"
@@ -105,8 +122,6 @@ class KorToEngHookTest(unittest.TestCase):
         self.assertIn(repeat_guard, context)
         self.assertIn("Treat the rewritten English prompt as the primary user request.", context)
         self.assertIn("Assistant-understood request: Check the test thread status.", context)
-        self.assertIn("테스트 스레드 상태 확인해줘", context)
-        self.assertIn("English translation:\nCheck the test thread status.", context)
 
     def test_accepts_utf8_bom_prefixed_payload(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
@@ -209,9 +224,6 @@ class KorToEngHookTest(unittest.TestCase):
         context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
         system_message = get_text(parsed, "systemMessage")
         self.assertTrue(system_message.startswith("\ubc88\uc5ed: So sentence correction works"))
-        self.assertIn("Original English:", context)
-        self.assertIn("Corrected English:", context)
-        self.assertIn("Then awkward sentence fixing is okay?", context)
         self.assertIn("So sentence correction works, right?", context)
 
     def test_returns_no_output_when_fluent_english_prompt_arrives(self) -> None:
