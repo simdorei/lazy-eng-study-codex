@@ -212,7 +212,7 @@ def codex_home_path(env: Mapping[str, str]) -> Path:
 
 def marketplace_source_root(plugin_root: Path) -> Path:
     if plugin_root.parent.name == "plugins":
-        return plugin_root.parent
+        return plugin_root.parent.parent
     return plugin_root
 
 

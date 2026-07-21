@@ -133,7 +133,7 @@ class InstallPluginTest(unittest.TestCase):
         self.assertIn("plugin_hooks = true", config)
         self.assertIn(f"[marketplaces.{EXPECTED_MARKETPLACE_NAME}]", config)
         self.assertIn('source_type = "local"', config)
-        self.assertIn(f"source = {json.dumps(str(PLUGIN_ROOT.parent))}", config)
+        self.assertIn(f"source = {json.dumps(str(REPO_ROOT))}", config)
         self.assertIn(f'[plugins."{EXPECTED_PLUGIN_NAME}@{EXPECTED_MARKETPLACE_NAME}"]', config)
         self.assertIn("enabled = true", config)
         self.assertIn(
