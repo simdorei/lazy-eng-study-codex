@@ -41,6 +41,39 @@ def read_settings(path: Path) -> JsonObject:
 
 
 class KortoengControlTest(unittest.TestCase):
+    def test_auto_model_preserves_other_settings_and_forces_medium(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            settings_path = Path(temp_dir) / "settings.json"
+            _ = settings_path.write_text(json.dumps({
+                "model": "gpt-5.5", "effort": "high", "enabled": False,
+                "codex_bin": "saved-codex", "custom_value": "preserve",
+            }), encoding="utf-8")
+            env = {"CODEX_KOR_TO_ENG_SETTINGS_FILE": str(settings_path)}
+
+            exit_code, output = run_control(["model", "auto"], env)
+            saved = read_settings(settings_path)
+            loaded = hook.read_settings(env)
+
+        self.assertEqual(exit_code, 0, output)
+        self.assertEqual(saved["model"], "auto")
+        self.assertEqual(saved["effort"], "medium")
+        self.assertEqual(saved["enabled"], False)
+        self.assertEqual(saved["codex_bin"], "saved-codex")
+        self.assertEqual(saved["custom_value"], "preserve")
+        self.assertEqual(loaded.model, "auto")
+        self.assertEqual(loaded.effort, "medium")
+
+    def test_auto_default_ignores_incompatible_effort_override(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            env = {
+                "CODEX_KOR_TO_ENG_SETTINGS_FILE": str(Path(temp_dir) / "missing.json"),
+                "CODEX_KOR_TO_ENG_EFFORT": "high",
+            }
+            settings = hook.read_settings(env)
+
+        self.assertEqual(settings.model, "auto")
+        self.assertEqual(settings.effort, "medium")
+
     def test_control_commands_write_settings_file(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             root = Path(temp_dir)

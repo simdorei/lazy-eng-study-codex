@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import sys
 import tempfile
 import unittest
@@ -23,7 +24,7 @@ class CodexBinDiscoveryTest(unittest.TestCase):
 
         self.assertEqual(codex_bin, str(fake_codex))
 
-    def test_prefers_stable_openai_install_path(self) -> None:
+    def test_prefers_newest_installed_app_binary_over_stale_stable_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:
             install_root = Path(temp_dir) / "OpenAI" / "Codex" / "bin"
             stable_codex = install_root / "codex.exe"
@@ -31,10 +32,29 @@ class CodexBinDiscoveryTest(unittest.TestCase):
             version_codex.parent.mkdir(parents=True)
             _ = stable_codex.write_text("", encoding="utf-8")
             _ = version_codex.write_text("", encoding="utf-8")
+            os.utime(stable_codex, (100, 100))
+            os.utime(version_codex, (200, 200))
 
             codex_bin = read_codex_bin({"LOCALAPPDATA": temp_dir, "PATH": ""})
 
-        self.assertEqual(codex_bin, str(stable_codex))
+        self.assertEqual(codex_bin, str(version_codex))
+
+    def test_saved_app_path_tracks_newest_install_without_changing_custom_paths(self) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            install_root = Path(temp_dir) / "OpenAI" / "Codex" / "bin"
+            older = install_root / "zz-old" / "codex.exe"
+            newer = install_root / "aa-new" / "codex.exe"
+            custom = Path(temp_dir) / "custom" / "codex.exe"
+            for path, modified in ((older, 100), (newer, 200), (custom, 50)):
+                path.parent.mkdir(parents=True, exist_ok=True)
+                _ = path.write_text("", encoding="utf-8")
+                os.utime(path, (modified, modified))
+            env = {"LOCALAPPDATA": temp_dir, "PATH": ""}
+            selected_app = read_codex_bin({**env, "CODEX_KOR_TO_ENG_CODEX_BIN": str(older)})
+            selected_custom = read_codex_bin({**env, "CODEX_KOR_TO_ENG_CODEX_BIN": str(custom)})
+
+        self.assertEqual(selected_app, str(newer))
+        self.assertEqual(selected_custom, str(custom))
 
     def test_ignores_missing_configured_path(self) -> None:
         with tempfile.TemporaryDirectory() as temp_dir:

@@ -45,10 +45,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure_model.ps
 
 Options:
 
-- `1` Spark: `gpt-5.3-codex-spark`
-- `2` GPT-5.5: `gpt-5.5`
+- `1` Auto (default): discover the oldest visible GPT generation supporting
+  medium text requests from the current Codex `model/list`. Use medium effort.
+- `2` Spark: `gpt-5.3-codex-spark` (legacy pin, may be unavailable)
+- `3` GPT-5.5: `gpt-5.5` (legacy pin, may be unavailable)
 
 The script stores the choice in the same JSON settings file used by
-`$kortoeng-model`. It also stores the matching timeout: 90 seconds for Spark
-and GPT-5.5. Environment variables are only fallback defaults
+`$kortoeng-model`. Existing installations should run `$kortoeng-model auto` once
+to replace a saved version pin. Each automatic translation queries the current
+model list again; same-generation ties keep Codex's picker order. Discovery
+failures are visible errors, never guessed model versions. The translation
+timeout is 90 seconds. Environment variables are only fallback defaults
 when the settings file has no stored model.

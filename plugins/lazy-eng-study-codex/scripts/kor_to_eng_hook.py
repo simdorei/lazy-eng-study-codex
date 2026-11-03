@@ -5,11 +5,13 @@ import os
 import subprocess
 import sys
 from collections.abc import Mapping
+from dataclasses import replace
 from json import JSONDecodeError
 from pathlib import Path
 from typing import Final, assert_never
 
 from codex_child_home import child_codex_env
+from codex_models import ModelDiscoveryError, list_codex_models, oldest_medium_model
 from hook_output import format_hook_output, format_preflight_failure
 from hook_types import (
     HookSettings,
@@ -124,11 +126,21 @@ def run_custom_translator(request: TranslationRequest) -> TranslationResult:
 
 
 def run_codex_translator(request: TranslationRequest) -> TranslationResult:
-    command = build_codex_command(request.settings, request.prompt)
+    settings = request.settings
     try:
         env = child_codex_env(os.environ)
     except OSError as exc:
         return TranslationFailure(reason=f"codex child home could not be prepared: {exc}")
+    if settings.model == "auto":
+        try:
+            models = list_codex_models(
+                settings.codex_bin, env, request.cwd,
+                timeout=min(20, settings.timeout_seconds),
+            )
+            settings = replace(settings, model=oldest_medium_model(models), effort="medium")
+        except ModelDiscoveryError as exc:
+            return TranslationFailure(reason=str(exc))
+    command = build_codex_command(settings, request.prompt)
     try:
         completed = subprocess.run(
             command,
@@ -162,7 +174,7 @@ def run_codex_translator(request: TranslationRequest) -> TranslationResult:
         return TranslationFailure(reason="codex returned empty translation")
     return TranslationSuccess(
         english=english,
-        engine=f"{request.settings.model}/{request.settings.effort}",
+        engine=f"{settings.model}/{settings.effort}",
     )
 
 

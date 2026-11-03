@@ -10,7 +10,7 @@ from typing import Final
 from codex_bin_discovery import empty_to_none, read_codex_bin
 from hook_types import HookSettings, JsonObject, JsonValue
 
-DEFAULT_MODEL: Final = "gpt-5.5"
+DEFAULT_MODEL: Final = "auto"
 DEFAULT_EFFORT: Final = "medium"
 DEFAULT_TIMEOUT_SECONDS: Final = 90
 SETTINGS_FILE_ENV: Final = "CODEX_KOR_TO_ENG_SETTINGS_FILE"
@@ -27,10 +27,12 @@ class ModelChoice:
 
 
 MODEL_CHOICES: Final[dict[str, ModelChoice]] = {
+    "auto": ModelChoice(model="auto", timeout_seconds=90),
     "gpt-5.3-codex-spark": ModelChoice(model="gpt-5.3-codex-spark", timeout_seconds=90),
     "gpt-5.5": ModelChoice(model="gpt-5.5", timeout_seconds=90),
 }
 MODEL_ALIASES: Final[dict[str, str]] = {
+    "oldest": "auto",
     "spark": "gpt-5.3-codex-spark",
     "gpt55": "gpt-5.5",
 }
@@ -43,14 +45,18 @@ def read_hook_settings(env: Mapping[str, str]) -> HookSettings:
     if stored_codex_bin is not None:
         codex_env["CODEX_KOR_TO_ENG_CODEX_BIN"] = stored_codex_bin
 
+    model = resolve_model_choice(
+        read_text(stored, "model") or env.get("CODEX_KOR_TO_ENG_MODEL", DEFAULT_MODEL),
+    ).model
     return HookSettings(
         enabled=read_bool(stored, "enabled", default=True),
         custom_command=empty_to_none(env.get("CODEX_KOR_TO_ENG_TRANSLATOR_COMMAND")),
         codex_bin=read_codex_bin(codex_env),
-        model=resolve_model_choice(
-            read_text(stored, "model") or env.get("CODEX_KOR_TO_ENG_MODEL", DEFAULT_MODEL),
-        ).model,
-        effort=read_text(stored, "effort") or env.get("CODEX_KOR_TO_ENG_EFFORT", DEFAULT_EFFORT),
+        model=model,
+        effort=(
+            DEFAULT_EFFORT if model == "auto"
+            else read_text(stored, "effort") or env.get("CODEX_KOR_TO_ENG_EFFORT", DEFAULT_EFFORT)
+        ),
         timeout_seconds=read_timeout_seconds(stored, env),
     )
 

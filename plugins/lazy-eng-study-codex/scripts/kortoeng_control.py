@@ -88,15 +88,19 @@ def set_enabled(env: Mapping[str, str], *, enabled: bool) -> int:
 
 def set_model(env: Mapping[str, str], args: Sequence[str]) -> int:
     if len(args) != 1:
-        _ = sys.stdout.write("missing model. Use one of: spark, gpt55\n")
+        _ = sys.stdout.write("missing model. Use one of: auto, spark, gpt55\n")
         return 2
 
     choice = resolve_model_choice(args[0])
     settings = load_settings_map(env)
     settings["model"] = choice.model
     settings["timeout_seconds"] = choice.timeout_seconds
+    if choice.model == "auto":
+        settings["effort"] = "medium"
     path = save_settings_map(env, settings)
     _ = sys.stdout.write(f"model={choice.model}\n")
+    if choice.model == "auto":
+        _ = sys.stdout.write("effort=medium\n")
     _ = sys.stdout.write(f"timeout_seconds={choice.timeout_seconds}\n")
     _ = sys.stdout.write(f"settings_file={path}\n")
     return 0
@@ -127,9 +131,9 @@ def save_codex_bin(env: Mapping[str, str]) -> int:
 
 def show_usage(*, exit_code: int = 0) -> int:
     models = ", ".join(MODEL_CHOICES)
-    usage = "usage: kortoeng_control.py status|on|off|model <spark|gpt55>|codex-bin\n"
+    usage = "usage: kortoeng_control.py status|on|off|model <auto|spark|gpt55>|codex-bin\n"
     _ = sys.stdout.write(usage)
-    _ = sys.stdout.write(f"models: spark, gpt55, {models}\n")
+    _ = sys.stdout.write(f"models: oldest, spark, gpt55, {models}\n")
     return exit_code
 
 

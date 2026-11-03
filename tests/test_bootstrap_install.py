@@ -142,7 +142,8 @@ class BootstrapInstallTest(unittest.TestCase):
         self.assertIn("python_source=configured", completed.stdout)
         self.assertIn("install=ok", completed.stdout)
         self.assertEqual(settings["enabled"], True)
-        self.assertEqual(settings["model"], "gpt-5.5")
+        self.assertEqual(settings["model"], "auto")
+        self.assertEqual(settings["effort"], "medium")
         self.assertEqual(settings["timeout_seconds"], 90)
         self.assertIn("codex", str(settings["codex_bin"]).lower())
 

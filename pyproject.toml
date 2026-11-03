@@ -1,6 +1,6 @@
 [project]
 name = "lazy-eng-study-codex"
-version = "0.1.0"
+version = "0.2.0"
 description = "Codex plugin for lazy English study through Korean translation and English correction."
 readme = "README.md"
 requires-python = ">=3.11"

@@ -7,6 +7,7 @@ import tempfile
 import unittest
 from collections.abc import Mapping
 from pathlib import Path
+from unittest.mock import patch
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SCRIPT_DIR = REPO_ROOT / "plugins" / "lazy-eng-study-codex" / "scripts"
@@ -61,19 +62,19 @@ def get_object_map(value: Mapping[str, JsonValue], key: str) -> JsonObject:
 
 
 class CodexTranslatorTest(unittest.TestCase):
-    def test_default_codex_command_uses_gpt55_model_and_medium_effort(self) -> None:
+    def test_codex_command_uses_selected_model_and_medium_effort(self) -> None:
         settings = HookSettings(
             enabled=True,
             custom_command=None,
             codex_bin="codex",
-            model=hook.DEFAULT_MODEL,
+            model="gpt-9.2-test",
             effort=hook.DEFAULT_EFFORT,
             timeout_seconds=90,
         )
 
         command = hook.build_codex_command(settings, "테스트해줘")
 
-        self.assertIn("gpt-5.5", command)
+        self.assertIn("gpt-9.2-test", command)
         self.assertIn('model_reasoning_effort="medium"', command)
         self.assertIn("--ephemeral", command)
         self.assertEqual(command[1:4], ["--ask-for-approval", "never", "exec"])
@@ -103,12 +104,18 @@ class CodexTranslatorTest(unittest.TestCase):
                 {"CODEX_KOR_TO_ENG_CODEX_BIN": str(fake_codex)},
             )
 
-            output = hook.run_hook(json.dumps(payload), env)
+            models: list[JsonObject] = [{
+                "model": "gpt-9.2-test",
+                "supportedReasoningEfforts": [{"reasoningEffort": "medium"}],
+            }]
+            with patch.object(hook, "list_codex_models", return_value=models) as model_list:
+                output = hook.run_hook(json.dumps(payload), env)
+            model_list.assert_called_once()
 
         parsed = parse_json_object(output)
         context = get_text(get_object_map(parsed, "hookSpecificOutput"), "additionalContext")
         system_message = get_text(parsed, "systemMessage")
-        self.assertIn("gpt-5.5/medium", system_message)
+        self.assertIn("gpt-9.2-test/medium", system_message)
         self.assertNotIn("SUCCESS: The process", system_message)
         self.assertIn("Check the test thread status through default codex.", system_message)
         self.assertIn(

@@ -27,6 +27,16 @@ def resolve_codex_bin(env: Mapping[str, str]) -> CodexBinResolution:
         and Path(configured).is_file()
         and not is_windowsapps_codex_bin(configured)
     ):
+        app_install = find_windows_codex_bin(env)
+        local_app_data = empty_to_none(env.get("LOCALAPPDATA"))
+        if app_install is not None and local_app_data is not None:
+            install_root = Path(local_app_data) / "OpenAI" / "Codex" / "bin"
+            if Path(configured).resolve().is_relative_to(install_root.resolve()):
+                return CodexBinResolution(
+                    path=app_install,
+                    source="app_install",
+                    ignored_configured_path=None,
+                )
         return CodexBinResolution(
             path=str(Path(configured).resolve()),
             source="configured",
@@ -73,14 +83,11 @@ def find_windows_codex_bin(env: Mapping[str, str]) -> str | None:
     if not install_root.is_dir():
         return None
 
-    stable_candidate = install_root / "codex.exe"
-    if stable_candidate.is_file():
-        return str(stable_candidate)
-
-    for candidate in sorted(install_root.glob("*/codex.exe"), reverse=True):
-        if candidate.is_file():
-            return str(candidate)
-    return None
+    candidates = [install_root / "codex.exe", *install_root.glob("*/codex.exe")]
+    installed = [candidate for candidate in candidates if candidate.is_file()]
+    if not installed:
+        return None
+    return str(max(installed, key=lambda candidate: candidate.stat().st_mtime_ns))
 
 
 def find_macos_codex_bin(env: Mapping[str, str]) -> str | None:

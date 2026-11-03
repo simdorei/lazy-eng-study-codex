@@ -1,6 +1,6 @@
 {
   "name": "lazy-eng-study-codex",
-  "version": "0.1.0+codex.20260721110902",
+  "version": "0.2.0",
   "description": "Lazy English study for Codex with Korean translation and English correction.",
   "author": {
     "name": "simdorei"
@@ -12,7 +12,7 @@
   "interface": {
     "displayName": "Lazy Eng Study Codex",
     "shortDescription": "Study English while using Codex through translation and correction.",
-    "longDescription": "Lazy Eng Study Codex adds a UserPromptSubmit hook that detects Korean prompts, prepares Python through a portable bootstrap when needed, translates Korean to English, corrects explicit $gram English sentences, and returns the visible prompt line Codex should answer. Use $kortoeng-model or scripts/configure_model.ps1 after install to choose Spark or GPT-5.5.",
+    "longDescription": "Lazy Eng Study Codex translates Korean prompts and corrects English requests. Auto mode discovers the oldest GPT generation currently available in Codex with medium reasoning, so retired model versions require no manual model update. Use $kortoeng-model auto to enable it on an existing installation.",
     "developerName": "simdorei",
     "category": "Developer Tools",
     "capabilities": [
@@ -22,6 +22,6 @@
       "English Study",
       "Context Injection"
     ],
-    "defaultPrompt": "Help me configure lazy English study in Codex and choose Spark or GPT-5.5."
+    "defaultPrompt": "Help me configure lazy English study in Codex with automatic supported-model discovery and medium reasoning."
   }
 }
